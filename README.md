@@ -18,7 +18,7 @@ IDE: Clion
 
 1.Install latest CMake(安装最新版本的CMake) or Install Clion(或者安装Clion,更推荐安装Clion,Clion捆绑了CMake)
 
-2.gti clone https://github.com/Misakiotoha/Yosuga.git (克隆本项目)
+2.gti clone https://github.com/Misakityan/Yosuga (克隆本项目)
 
 3.Open with Clion(使用Clion打开本项目(推荐)) or use command(或者使用命令)
 
