@@ -1,8 +1,8 @@
 ## 📊 Project Stats
 
-![GitHub last commit](https://img.shields.io/github/last-commit/Misakiotoha/Yosuga)
-![GitHub issues](https://img.shields.io/github/issues/Misakiotoha/Yosuga)
-![GitHub stars](https://img.shields.io/github/stars/Misakiotoha/Yosuga?style=social)
+![GitHub last commit](https://img.shields.io/github/last-commit/Misakityan/Yosuga)
+![GitHub issues](https://img.shields.io/github/issues/Misakityan/Yosuga)
+![GitHub stars](https://img.shields.io/github/stars/Misakityan/Yosuga?style=social)
 
 本项目使用CMake构建，基于C++Qt6以及Live2D官方SDK实现桌面宠物
 (本项目由Yosuga[Qt5] 发展更新而来，项目架构与代码都有所不同，最显著的特点是本项目支持多平台)
