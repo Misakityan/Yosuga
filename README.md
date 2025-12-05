@@ -8,11 +8,13 @@
 (本项目由Yosuga[Qt5] 发展更新而来，项目架构与代码都有所不同，最显著的特点是本项目支持多平台)
 环境为:
 
-cmake version 3.31.3
+- cmake version 3.5
 
-Qt6.6.3
+- C++ 20
 
-IDE: Clion
+- Qt6.6.3
+
+- IDE: Clion
 
 如何构建本项目：
 

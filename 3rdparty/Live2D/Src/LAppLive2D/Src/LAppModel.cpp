@@ -47,7 +47,7 @@ namespace {
 
 LAppModel::LAppModel()
     : CubismUserModel()
-    , _modelSetting(NULL)
+    , _modelSetting(nullptr)
     , _userTimeSeconds(0.0f)
 {
     if (MocConsistencyValidationEnable)
@@ -101,7 +101,7 @@ void LAppModel::LoadAssets(const csmChar* dir, const csmChar* fileName)
 
     SetupModel(setting);
 
-    if (_model == NULL)
+    if (_model == nullptr)
     {
         LAppPal::PrintLogLn("Failed to LoadAssets().");
         return;
@@ -123,7 +123,7 @@ void LAppModel::SetupModel(ICubismModelSetting* setting)
     csmSizeInt size;
 
     //Cubism Model
-    if (strcmp(_modelSetting->GetModelFileName(), "") != 0)
+    if (strcmp(_modelSetting->GetModelFileName(), "") != 0)     // 如果模型文件名不为空
     {
         csmString path = _modelSetting->GetModelFileName();
         path = _modelHomeDir + path;
@@ -153,10 +153,10 @@ void LAppModel::SetupModel(ICubismModelSetting* setting)
 
             if (motion)
             {
-                if (_expressions[name] != NULL)
+                if (_expressions[name] != nullptr)
                 {
                     ACubismMotion::Delete(_expressions[name]);
-                    _expressions[name] = NULL;
+                    _expressions[name] = nullptr;
                 }
                 _expressions[name] = motion;
             }
@@ -240,7 +240,7 @@ void LAppModel::SetupModel(ICubismModelSetting* setting)
         }
     }
 
-    if (_modelSetting == NULL || _modelMatrix == NULL)
+    if (_modelSetting == nullptr || _modelMatrix == nullptr)
     {
         LAppPal::PrintLogLn("Failed to SetupModel().");
         return;
@@ -258,11 +258,11 @@ void LAppModel::SetupModel(ICubismModelSetting* setting)
         const csmChar* group = _modelSetting->GetMotionGroupName(i);
         PreloadMotionGroup(group);
     }
-
     _motionManager->StopAllMotions();
 
     _updating = false;
     _initialized = true;
+    LAppPal::PrintLogLn("[APP]当前模型像素大小: H: %lf  W: %lf", GetModelCanvasHeightPixel(), GetModelCanvasWidthPixel());
 }
 
 void LAppModel::PreloadMotionGroup(const csmChar* group)
@@ -301,7 +301,7 @@ void LAppModel::PreloadMotionGroup(const csmChar* group)
             }
             tmpMotion->SetEffectIds(_eyeBlinkIds, _lipSyncIds);
 
-            if (_motions[name] != NULL)
+            if (_motions[name] != nullptr)
             {
                 ACubismMotion::Delete(_motions[name]);
             }
@@ -389,14 +389,14 @@ void LAppModel::Update()
     // まばたき 眨眼
     if (!motionUpdated)
     {
-        if (_eyeBlink != NULL)
+        if (_eyeBlink != nullptr)
         {
             // メインモーションの更新がないとき 当主动作没有更新时
             _eyeBlink->UpdateParameters(_model, deltaTimeSeconds); // 目パチ
         }
     }
 
-    if (_expressionManager != NULL)
+    if (_expressionManager != nullptr)
     {
         _expressionManager->UpdateMotion(_model, deltaTimeSeconds); // 表情でパラメータ更新（相対変化）
     }
@@ -415,13 +415,13 @@ void LAppModel::Update()
     _model->AddParameterValue(_idParamEyeBallY, _dragY);
 
     // 呼吸など
-    if (_breath != NULL)
+    if (_breath != nullptr)
     {
         _breath->UpdateParameters(_model, deltaTimeSeconds);
     }
 
     // 物理演算の設定
-    if (_physics != NULL)
+    if (_physics != nullptr)
     {
         _physics->Evaluate(_model, deltaTimeSeconds);
     }
@@ -455,7 +455,7 @@ void LAppModel::Update()
     }
 
     // ポーズの設定
-    if (_pose != NULL)
+    if (_pose != nullptr)
     {
         _pose->UpdateParameters(_model, deltaTimeSeconds);
     }
@@ -516,7 +516,7 @@ CubismMotionQueueEntryHandle LAppModel::StartMotion(const csmChar* group, csmInt
     CubismMotion* motion = static_cast<CubismMotion*>(_motions[name.GetRawString()]);
     csmBool autoDelete = false;
 
-    if (motion == NULL)
+    if (motion == nullptr)
     {
         csmString path = fileName;
         path = _modelHomeDir + path;
@@ -524,7 +524,7 @@ CubismMotionQueueEntryHandle LAppModel::StartMotion(const csmChar* group, csmInt
         csmByte* buffer;
         csmSizeInt size;
         buffer = CreateBuffer(path.GetRawString(), &size);
-        motion = static_cast<CubismMotion*>(LoadMotion(buffer, size, NULL, onFinishedMotionHandler));
+        motion = static_cast<CubismMotion*>(LoadMotion(buffer, size, nullptr, onFinishedMotionHandler));
 
         if  (motion)
         {
@@ -618,7 +618,7 @@ int LAppModel::getTapBodyMotionCount()
 
 void LAppModel::DoDraw()
 {
-    if (_model == NULL)
+    if (_model == nullptr)
     {
         return;
     }
@@ -628,7 +628,7 @@ void LAppModel::DoDraw()
 
 void LAppModel::Draw(CubismMatrix44& matrix)
 {
-    if (_model == NULL)
+    if (_model == nullptr)
     {
         return;
     }
@@ -667,7 +667,7 @@ void LAppModel::SetExpression(const csmChar* expressionID)
         LAppPal::PrintLogLn("[APP]expression: [%s]", expressionID);
     }
 
-    if (motion != NULL)
+    if (motion != nullptr)
     {
         _expressionManager->StartMotionPriority(motion, false, PriorityForce);
     }

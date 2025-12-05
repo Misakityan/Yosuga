@@ -25,7 +25,7 @@ LAppView::LAppView():
     //_back(NULL),
     //_gear(NULL),
     //_power(NULL),
-    _renderSprite(NULL),
+    _renderSprite(nullptr),
     _renderTarget(SelectTarget_None)
 {
     _clearColor[0] = 1.0f;
@@ -268,7 +268,7 @@ float LAppView::TransformScreenY(float deviceY) const
 void LAppView::PreModelDraw(LAppModel& refModel)
 {
     // 別のレンダリングターゲットへ向けて描画する場合の使用するフレームバッファ
-    Csm::Rendering::CubismOffscreenSurface_OpenGLES2* useTarget = NULL;
+    Csm::Rendering::CubismOffscreenSurface_OpenGLES2* useTarget = nullptr;
 
     if (_renderTarget != SelectTarget_None)
     {// 別のレンダリングターゲットへ向けて描画する場合
@@ -299,7 +299,7 @@ void LAppView::PreModelDraw(LAppModel& refModel)
 void LAppView::PostModelDraw(LAppModel& refModel)
 {
     // 別のレンダリングターゲットへ向けて描画する場合の使用するフレームバッファ
-    Csm::Rendering::CubismOffscreenSurface_OpenGLES2* useTarget = NULL;
+    Csm::Rendering::CubismOffscreenSurface_OpenGLES2* useTarget = nullptr;
 
     if (_renderTarget != SelectTarget_None)
     {// 別のレンダリングターゲットへ向けて描画する場合

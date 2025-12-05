@@ -1,9 +1,7 @@
 //
 // Created by Administrator on 2025/2/16.
 //
-
-#ifndef AIRI_DESKTOPGRIL_TEXTRENDERER_H
-#define AIRI_DESKTOPGRIL_TEXTRENDERER_H
+#pragma once
 
 #include <QOpenGLWidget>
 #include <QVector>
@@ -99,5 +97,3 @@ private:
     float gravity;                      /// 重力加速度（像素/秒²）
     float dampFactor;                   /// 碰撞阻尼系数
 };
-
-#endif //AIRI_DESKTOPGRIL_TEXTRENDERER_H

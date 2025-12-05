@@ -29,7 +29,7 @@ using namespace LAppDefine;
 using namespace std;
 
 namespace {
-    LAppLive2DManager* s_instance = NULL;
+    LAppLive2DManager* s_instance = nullptr;
 
     void FinishedMotion(ACubismMotion* self)
     {
@@ -45,7 +45,7 @@ namespace {
 
 LAppLive2DManager* LAppLive2DManager::GetInstance()
 {
-    if (s_instance == NULL)
+    if (s_instance == nullptr)
     {
         s_instance = new LAppLive2DManager();
     }
@@ -55,22 +55,22 @@ LAppLive2DManager* LAppLive2DManager::GetInstance()
 
 void LAppLive2DManager::ReleaseInstance()
 {
-    if (s_instance != NULL)
+    if (s_instance != nullptr)
     {
         delete s_instance;
     }
 
-    s_instance = NULL;
+    s_instance = nullptr;
 }
 
 LAppLive2DManager::LAppLive2DManager()
-    : _viewMatrix(NULL)
+    : _viewMatrix(nullptr)
     , _sceneIndex(0)
 {
     _viewMatrix = new CubismMatrix44();
     //SetUpModel();
     // Resources/Haru/   Haru.model3.json
-    LoadModelFromPath("Resources/Live2DModels/KITU17/", "KITU17.model3.json");
+    LoadModelFromPath("Resources/Live2DModels/KITU17/", "KITU17.model3.json");      // 默认加载的模型
     //ChangeScene(_sceneIndex);
 }
 
@@ -140,7 +140,7 @@ void LAppLive2DManager::SetUpModel()
         if (fs::exists(modelJson))
             _modelDir.PushBack(csmString(dirName.c_str()));
     }
-    /* 保持与原代码相同的排序 */
+    // 保持与原代码相同的排序
     qsort(_modelDir.GetPtr(), _modelDir.GetSize(), sizeof(csmString), CompareCsmString);
 #endif
 }
@@ -162,7 +162,7 @@ LAppModel* LAppLive2DManager::GetModel(csmUint32 no) const
         return _models[no];
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -229,7 +229,7 @@ void LAppLive2DManager::OnUpdate() const
         CubismMatrix44 projection;
         LAppModel* model = GetModel(i);
 
-        if (model->GetModel() == NULL)
+        if (model->GetModel() == nullptr)
         {
             LAppPal::PrintLogLn("Failed to model->GetModel().");
             continue;
@@ -247,7 +247,7 @@ void LAppLive2DManager::OnUpdate() const
         }
 
         // 必要があればここで乗算
-        if (_viewMatrix != NULL)
+        if (_viewMatrix != nullptr)
         {
             projection.MultiplyByMatrix(_viewMatrix);
         }
@@ -262,7 +262,7 @@ void LAppLive2DManager::OnUpdate() const
         LAppDelegate::GetInstance()->GetView()->PostModelDraw(*model);
     }
 }
-
+#include <AppContext.h>
 void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const std::string& fileName) 
 {
     csmString modelPathStr(modelPath.c_str());
@@ -272,6 +272,11 @@ void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const st
     _models.PushBack(new LAppModel());  // 这样在加载的时候都使用的models[0]这一个位置，自行实现模型选择器要注意注意
     _models[0]->LoadAssets(modelPathStr.GetRawString(), modelJsonName.GetRawString());
 
+    // 加载完后根据模型大小来重新设置当前窗口大小
+    const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);
+    const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / 15.0);
+    AppContext::GetGLCore()->setWindowSize(width, height);
+    LAppPal::PrintLogLn("[APP]窗口尺寸重新设置为: W: %d H: %d", width, height);
     /*
      * 提供一个半透明表示模型的示例。
      * 如果定义了USE_RENDER_TARGET或USE_MODEL_RENDER_TARGET，

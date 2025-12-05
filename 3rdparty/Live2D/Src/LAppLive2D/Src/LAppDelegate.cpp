@@ -63,7 +63,7 @@ bool LAppDelegate::Initialize(GLCore* window)
     // Windowの生成_
     //_window = glfwCreateWindow(RenderTargetWidth, RenderTargetHeight, "SAMPLE", NULL, NULL);
     _window = window;   // Misaki 修改
-    if (_window == NULL)
+    if (_window == nullptr)
     {
         if (DebugLogEnable)
         {
@@ -217,7 +217,7 @@ void LAppDelegate::update()
 
 LAppDelegate::LAppDelegate():
     _cubismOption(),
-    _window(NULL),
+    _window(nullptr),
     _captured(false),
     _mouseX(0.0f),
     _mouseY(0.0f),
@@ -259,7 +259,7 @@ void LAppDelegate::InitializeCubism()
 
 void LAppDelegate::OnMouseCallBack(GLFWwindow* window, int button, int action, int modify)
 {
-    if (_view == NULL)
+    if (_view == nullptr)
     {
         return;
     }
@@ -292,7 +292,7 @@ void LAppDelegate::OnMouseCallBack(GLFWwindow* window, double x, double y)
     {
         return;
     }
-    if (_view == NULL)
+    if (_view == nullptr)
     {
         return;
     }
@@ -313,7 +313,7 @@ GLuint LAppDelegate::CreateShader()
         "    gl_Position = vec4(position, 1.0);"
         "    vuv = uv;"
         "}";
-    glShaderSource(vertexShaderId, 1, &vertexShader, NULL);
+    glShaderSource(vertexShaderId, 1, &vertexShader, nullptr);
     glCompileShader(vertexShaderId);
     if(!CheckShader(vertexShaderId))
     {
@@ -330,7 +330,7 @@ GLuint LAppDelegate::CreateShader()
         "void main(void){"
         "    gl_FragColor = texture2D(texture, vuv) * baseColor;"
         "}";
-    glShaderSource(fragmentShaderId, 1, &fragmentShader, NULL);
+    glShaderSource(fragmentShaderId, 1, &fragmentShader, nullptr);
     glCompileShader(fragmentShaderId);
     if (!CheckShader(fragmentShaderId))
     {

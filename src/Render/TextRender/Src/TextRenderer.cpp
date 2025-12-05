@@ -198,8 +198,8 @@ void TextRenderer::update()
 
                     // 最终居中定位
                     int totalWidth = 0;
-                    for (int w : instance.charWidths) totalWidth += w;
-                    int startX = (windowWidth - totalWidth) / 2;
+                    for (const int w : instance.charWidths) totalWidth += w;
+                    const int startX = (windowWidth - totalWidth) / 2;
                     int currentX = startX;
 
                     instance.charPositions.clear();

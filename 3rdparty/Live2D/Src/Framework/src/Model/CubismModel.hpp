@@ -159,43 +159,43 @@ public:
     void    Update() const;
 
     /**
-     * Returns the width of the canvas.
-     *
+     * Returns the width of the canvas.<br>
+     * 返回画布的像素宽度。
      * @return Width of the canvas in pixels
      */
     csmFloat32  GetCanvasWidthPixel() const;
 
     /**
-     * Returns the height of the canvas.
-     *
+     * Returns the height of the canvas.<br>
+     * 返回画布的像素高度。
      * @return Height of the canvas in pixels
      */
     csmFloat32  GetCanvasHeightPixel() const;
 
     /**
-     * Returns the pixels per unit (PPU).
-     *
+     * Returns the pixels per unit (PPU). <br>
+     * 返回 PPU（Pixels Per Unit），即 Live2D 坐标系中的 $1.0$ 单位对应多少像素。 (Misaki注解)
      * @return Pixels per unit
      */
     csmFloat32  GetPixelsPerUnit() const;
 
     /**
      * Returns the width of the canvas.
-     *
+     * 返回画布在 PPU 单位下的宽度（例如 1.0）
      * @return Width of the canvas in PPU (pixels per unit)
      */
     csmFloat32  GetCanvasWidth() const;
 
     /**
      * Returns the height of the canvas.
-     *
+     * 返回画布在 PPU 单位下的高度（例如 2.155300）。
      * @return Height of the canvas in PPU (pixels per unit)
      */
     csmFloat32  GetCanvasHeight() const;
 
     /**
      * Returns the index of the part.
-     *
+     * 根据部件 ID (例如 PartId::HairFront) 获取其在数组中的索引。
      * @param partId Part ID
      *
      * @return Index of the part
@@ -204,7 +204,7 @@ public:
 
     /**
      * Returns the ID of the part.
-     *
+     * 根据索引获取部件 ID。
      * @param partIndex Index of the part
      * @return Part ID
      */
@@ -212,21 +212,21 @@ public:
 
     /**
      * Returns the number of parts.
-     *
+     * 返回模型中部件的总数。
      * @return Number of parts
      */
     csmInt32    GetPartCount() const;
 
     /**
      * Returns the index of the parent parts for the parts.
-     *
+     * 获取每个部件的父部件索引数组，用于确定绘制顺序或层级关系。
      * @return Index of parent parts for the parts.
      */
     const csmInt32* GetPartParentPartIndices() const;
 
     /**
      * Sets the opacity of the part.
-     *
+     * 设置或获取部件的不透明度（0.0 到 1.0）。常用于实现部件的动态隐藏或显示效果。
      * @param partId Part ID
      * @param opacity Opacity
      */
@@ -234,7 +234,7 @@ public:
 
     /**
      * Sets the opacity of the part.
-     *
+     * 设置或获取部件的不透明度（0.0 到 1.0）。常用于实现部件的动态隐藏或显示效果。
      * @param partIndex Part index
      * @param opacity Part opacity
      */

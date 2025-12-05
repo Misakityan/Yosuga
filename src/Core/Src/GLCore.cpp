@@ -61,7 +61,7 @@ GLCore::GLCore(int w, int h, QWidget *parent)
     TextRenderer::getInstance()->setGravity(600.0f);     // 更快的下坠速度
     TextRenderer::getInstance()->setDampFactor(0.85f);   // 更强的弹性效果
 
-    this->setWindowFlag(Qt::FramelessWindowHint); // 设置无边框窗口
+    // this->setWindowFlag(Qt::FramelessWindowHint); // 设置无边框窗口
     this->setWindowFlag(Qt::WindowStaysOnTopHint); // 设置窗口始终在顶部
     this->setWindowFlag(Qt::Tool); // 隐藏应用程序图标
     this->setAttribute(Qt::WA_TranslucentBackground); // 设置窗口背景透明
@@ -75,7 +75,7 @@ GLCore::GLCore(int w, int h, QWidget *parent)
     frameTimer->start(static_cast<int>((1.0 / frameRate) * 1000)); // 使用成员变量计算间隔
 
 
-    // 启用鼠标跟踪，不启用鼠标按下才会回调mouseMoveEvent函数
+    // 启用鼠标跟踪，不启用的话鼠标按下才会回调mouseMoveEvent函数
     this->setMouseTracking(true);
 
     // 连接一些必要的信号与槽
@@ -114,7 +114,7 @@ void GLCore::setFrameRate(double fps)
 }
 
 // 获取当前帧率
-double GLCore::getFrameRate()
+double GLCore::getFrameRate() const
 {
     return frameRate;
 }
@@ -163,8 +163,8 @@ void GLCore::closeEvent(QCloseEvent* event)
 void GLCore::mouseMoveEvent(QMouseEvent* event)
 {
     LAppDelegate::GetInstance()->GetView()->OnTouchesMoved(
-            event->position().x(),
-            event->position().y()
+            static_cast<float>(event->position().x()),
+            static_cast<float>(event->position().y())
             );
 
     if (isLeftPressed) {
@@ -176,8 +176,8 @@ void GLCore::mouseMoveEvent(QMouseEvent* event)
 void GLCore::mousePressEvent(QMouseEvent* event)
 {
     LAppDelegate::GetInstance()->GetView()->OnTouchesBegan(
-            event->position().x(),
-            event->position().y()
+            static_cast<float>(event->position().x()),
+            static_cast<float>(event->position().y())
             );
 
     if (event->button() == Qt::LeftButton) {
@@ -198,8 +198,8 @@ void GLCore::mousePressEvent(QMouseEvent* event)
 void GLCore::mouseReleaseEvent(QMouseEvent* event)
 {
     LAppDelegate::GetInstance()->GetView()->OnTouchesEnded(
-            event->position().x(),
-            event->position().y()
+            static_cast<float>(event->position().x()),
+            static_cast<float>(event->position().y())
             );
 
     if (event->button() == Qt::LeftButton) {
@@ -218,16 +218,31 @@ void GLCore::initializeGL()
 
 void GLCore::paintGL()
 {
-    LAppDelegate::GetInstance()->update();
+    LAppDelegate::GetInstance()->update();      // Live2D画面渲染
     // 渲染文本
     TextRenderer::getInstance()->update();
     TextRenderer::getInstance()->render();
 }
 
-void GLCore::resizeGL(int w, int h)
+void GLCore::resizeGL(const int w, const int h)
 {
     // 设置文本渲染器窗口大小
     TextRenderer::getInstance()->setWindowSize(w, h);
 
     LAppDelegate::GetInstance()->resize(w, h);
+}
+
+// 设置窗口大小，并触发 resizeGL 事件
+void GLCore::setWindowSize(const int w, const int h)
+{
+    // 检查是否需要更新，避免重复调用
+    if (this->width() == w && this->height() == h) {
+        return;
+    }
+
+    // 调用 QWidget::resize 或 setFixedSize 来改变窗口的实际尺寸
+    setFixedSize(w, h);
+
+    // 调用 setFixedSize 会自动触发 QOpenGLWidget 的 resizeEvent，
+    // 进而调用 resizeGL(w, h)，无需手动调用 resizeGL
 }

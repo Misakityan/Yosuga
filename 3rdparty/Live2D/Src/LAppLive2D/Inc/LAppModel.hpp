@@ -49,6 +49,25 @@ public:
     int getTapBodyMotionCount();
 
     /**
+     * @brief 获取 Live2D 模型的 Canvas 宽度像素 (在 Live2D 坐标系下)
+     * @return Canvas 宽度
+     */
+    Live2D::Cubism::Framework::csmFloat32 GetModelCanvasWidthPixel() const
+    {
+        // _model 是 CubismModel 的基类指针
+        return _model ? _model->GetCanvasWidthPixel() : 0.0f;
+    }
+
+    /**
+     * @brief 获取 Live2D 模型的 Canvas 高度像素 (在 Live2D 坐标系下)
+     * @return Canvas 高度
+     */
+    Live2D::Cubism::Framework::csmFloat32 GetModelCanvasHeightPixel() const
+    {
+        return _model ? _model->GetCanvasHeightPixel() : 0.0f;
+    }
+
+    /**
      * @brief 启动唇形同步并播放指定的 WAV 文件
      * @param filePath WAV 文件的路径（csmString 类型）
      * @author Misaki
@@ -64,8 +83,8 @@ public:
 
 
     /**
-     * @brief model3.jsonが置かれたディレクトリとファイルパスからモデルを生成する
-     *
+     * @brief model3.jsonが置かれたディレクトリとファイルパスからモデルを生成する \n
+     * 从 model3.json 所在的目录和文件路径生成模型
      */
     void LoadAssets(const Csm::csmChar* dir, const  Csm::csmChar* fileName);
 

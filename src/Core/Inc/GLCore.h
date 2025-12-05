@@ -4,7 +4,7 @@
 #include <QOpenGLWidget>
 #include "menu.h"
 
-class GLCore : public QOpenGLWidget
+class GLCore final : public QOpenGLWidget
 {
     Q_OBJECT
 
@@ -19,14 +19,17 @@ public:
     // 删除移动运算符
     GLCore& operator=(GLCore&&) = delete;
 
-    ~GLCore();
+    ~GLCore() override;
 
     // 帧率控制
     void setFrameRate(double fps);
-    double getFrameRate();
+    [[nodiscard]] double getFrameRate() const;
     // 帧率表
     static QMap<QString, double> getFrameRateMap();
     static QStringList getFrameRateList();
+
+    // 安全地设置窗口的实际像素尺寸
+    void setWindowSize(int w, int h);
 
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;

@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     // 设置日志过滤规则，将这个特定分类的警告级别设置为“关闭”
     QLoggingCategory::setFilterRules("qt.multimedia.ffmpeg.libsymbolsresolver.warning=false");
 #endif
-    GLCore w(360, 480);
+    GLCore w(360, 480);     // 创建默认的窗口
     w.show();
-    return a.exec();
+    return QApplication::exec();
 }
