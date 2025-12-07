@@ -239,10 +239,8 @@ void GLCore::setWindowSize(const int w, const int h)
     if (this->width() == w && this->height() == h) {
         return;
     }
-
     // 调用 QWidget::resize 或 setFixedSize 来改变窗口的实际尺寸
     setFixedSize(w, h);
-
     // 调用 setFixedSize 会自动触发 QOpenGLWidget 的 resizeEvent，
     // 进而调用 resizeGL(w, h)，无需手动调用 resizeGL
 }

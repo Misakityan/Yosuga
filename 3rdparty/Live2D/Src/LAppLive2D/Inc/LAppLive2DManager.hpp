@@ -107,7 +107,14 @@ public:
      * 至于为什么要这样拆分，只是为了适应底层的模型加载函数<br>
      * 你可以选择再上层封装，将传入的路径拆分为路径和文件名，然后调用本函数即可<br>
      */
+    [[deprecated("如需使用，请在单线程中使用本函数")]]
     void LoadModelFromPath(const std::string& modelPath, const std::string& fileName);
+
+    // 仅在内存中加载模型，不干扰当前运行状态（供子线程调用）
+    LAppModel* LoadModelInstance(const std::string& modelPath, const std::string& fileName);
+
+    // 将已经加载好的模型应用到系统中（供主线程调用）
+    void MountLoadedModel(LAppModel* model);
 
     /**
     * @brief   次のシーンに切り替える<br>

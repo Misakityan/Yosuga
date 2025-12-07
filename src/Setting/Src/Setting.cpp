@@ -79,7 +79,7 @@ void Setting::initNavigationBar()
     addPageNode("主页", homePage, ElaIconType::House);
 
     // 添加模型商店节点
-    addPageNode("模型商店", modelPage, ElaIconType::Shop);
+    addPageNode("模型设置", modelPage, ElaIconType::Shop);
 
     // 添加网络连接设置节点
     addPageNode("连接设置", networkPage, ElaIconType::NetworkWired);

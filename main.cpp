@@ -10,6 +10,7 @@
 
 int main(int argc, char *argv[])
 {
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);     // 允许多个窗口使用同一个OpenGL上下文(用于实现Live2D模型的异步加载)
     QApplication a(argc, argv);
     eApp->init();
     // 设置云母效果图片

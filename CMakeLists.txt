@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.30)
 project(Yosuga VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -51,6 +51,7 @@ find_package(Qt6 COMPONENTS
         WebSockets
         Multimedia
         OpenGLWidgets
+        Concurrent
         REQUIRED)
 find_package(OpenGL REQUIRED)
 
@@ -172,6 +173,7 @@ target_link_libraries(${PROJECT_NAME}
         Qt::WebSockets
         Qt::Multimedia
         Qt::OpenGLWidgets
+        Qt::Concurrent
 )
 
 # 添加头文件

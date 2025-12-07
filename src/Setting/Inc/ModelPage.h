@@ -6,9 +6,7 @@
  * @brief 模型页面
  * 暂时只做最简单功能切换模型
  */
-
-#ifndef YOSUGA_MODELPAGE_H
-#define YOSUGA_MODELPAGE_H
+#pragma once
 
 #include "BasePage.h"
 #include "ElaPushButton.h"
@@ -20,7 +18,7 @@
 
 class ElaLineEdit;
 class ElaPushButton;
-class ModelPage : public BasePage
+class ModelPage final : public BasePage
 {
 Q_OBJECT
 public:
@@ -28,7 +26,7 @@ public:
 
     std::pair<QString, QString> splitPath(const QString& fullPath);
 
-    ~ModelPage();
+    ~ModelPage() override;
 
 
 private:
@@ -39,12 +37,4 @@ private:
     QUrl modelFileUrl;
     QString modelFilePathFirst;
     QString modelFilePathSecond;
-
-
-
 };
-
-
-
-
-#endif //YOSUGA_MODELPAGE_H

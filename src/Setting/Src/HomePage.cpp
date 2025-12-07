@@ -52,7 +52,7 @@ HomePage::HomePage(QWidget* parent)
     urlCard1->setTitlePixelSize(17);
     urlCard1->setTitleSpacing(25);
     urlCard1->setSubTitleSpacing(13);
-    urlCard1->setUrl("https://github.com/Misakiotoha/Yosuga");
+    urlCard1->setUrl("https://github.com/Misakityan/Yosuga");
     urlCard1->setCardPixmap(QPixmap("Resources/Pic/Others/img.png"));
     urlCard1->setTitle("Yosuga Github");
     urlCard1->setSubTitle("Star++!");
@@ -110,10 +110,10 @@ HomePage::HomePage(QWidget* parent)
         Q_EMIT modelShopNavigation();
     });
     ModeShopCard->setCardPixmap(QPixmap("Resources/Pic/Others/Live2D.png"));
-    ModeShopCard->setTitle("模型商店");
+    ModeShopCard->setTitle("模型设置");
     ModeShopCard->setSubTitle("属于你的Live2D模型");
     ModeShopCard->setInteractiveTips("By Misaki");
-    ModeShopCard->setDetailedText("选择你喜欢的Live2D模型，模型来自多个作者，多个平台，有免费也有收费的");
+    ModeShopCard->setDetailedText("选择你喜欢的Live2D模型");
     // 音频设置卡片
     ElaPopularCard* AudioSettingCard = new ElaPopularCard(this);
     connect(AudioSettingCard, &ElaPopularCard::popularCardButtonClicked, this, [=, this]() {
@@ -144,10 +144,6 @@ HomePage::HomePage(QWidget* parent)
     centerVLayout->addLayout(flowLayout);
     centerVLayout->addStretch();
     addCentralWidget(centralWidget);
-
-    // 初始化提示
-    ElaMessageBar::success(ElaMessageBarType::BottomRight, "Success", "初始化成功!", 2000);
-    qDebug() << "初始化成功";
 }
 
 HomePage::~HomePage()

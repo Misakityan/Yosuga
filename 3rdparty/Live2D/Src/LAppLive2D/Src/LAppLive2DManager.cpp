@@ -6,8 +6,8 @@
  */
 
 #include "LAppLive2DManager.hpp"
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #if defined(_WIN32)
 #include <io.h>            // 保持 Windows 下继续用旧实现
 #include <direct.h>
@@ -265,8 +265,8 @@ void LAppLive2DManager::OnUpdate() const
 #include <AppContext.h>
 void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const std::string& fileName) 
 {
-    csmString modelPathStr(modelPath.c_str());
-    csmString modelJsonName(fileName.c_str());
+    const csmString modelPathStr(modelPath.c_str());
+    const csmString modelJsonName(fileName.c_str());
 
     ReleaseAllModel();  // 释放当前所有模型 有一个点要注意，在这里先释放然后再Push模型实例，以及加载模型实例
     _models.PushBack(new LAppModel());  // 这样在加载的时候都使用的models[0]这一个位置，自行实现模型选择器要注意注意
@@ -275,7 +275,7 @@ void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const st
     // 加载完后根据模型大小来重新设置当前窗口大小
     const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);
     const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / 15.0);
-    AppContext::GetGLCore()->setWindowSize(width, height);
+    AppContext::GetGLCore()->setWindowSize(width, height);      // 获取GLCore上下文
     LAppPal::PrintLogLn("[APP]窗口尺寸重新设置为: W: %d H: %d", width, height);
     /*
      * 提供一个半透明表示模型的示例。
@@ -306,6 +306,70 @@ void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const st
         // 当选择其他渲染目标时的背景清除颜色
         float clearColor[3] = { 1.0f, 1.0f, 1.0f };
         LAppDelegate::GetInstance()->GetView()->SetRenderTargetClearColor(clearColor[0], clearColor[1], clearColor[2]);
+    }
+}
+
+// 纯加载函数 将在子线程运行
+LAppModel* LAppLive2DManager::LoadModelInstance(const std::string& modelPath, const std::string& fileName)
+{
+    const Csm::csmString modelPathStr(modelPath.c_str());
+    const Csm::csmString modelJsonName(fileName.c_str());
+
+    // 创建新实例
+    auto* instance = new LAppModel();
+
+    // 加载资源 (耗时巨头：IO + OpenGL上传)
+    // 注意：这里需要当前线程已经绑定了有效的 OpenGL Context
+    instance->LoadAssets(modelPathStr.GetRawString(), modelJsonName.GetRawString());
+
+    return instance;
+}
+// 模型挂载函数 运行在主线程
+void LAppLive2DManager::MountLoadedModel(LAppModel* model)
+{
+    if (!model) return;     // 模型为空
+    // 释放旧模型
+    ReleaseAllModel();
+    // 加入新模型
+    _models.PushBack(model);
+
+    // 加载完后根据模型大小来重新设置当前窗口大小
+    const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);
+    const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / 15.0);
+
+    // 确保在主线程调用 UI 相关操作
+    if(AppContext::GetGLCore()) {
+        AppContext::GetGLCore()->setWindowSize(width, height);
+    }
+    LAppPal::PrintLogLn("[APP]窗口尺寸重新设置为: W: %d H: %d", width, height);
+
+    // 设置渲染目标等
+    {
+        /*
+         * 提供一个半透明表示模型的示例。
+         * 如果定义了USE_RENDER_TARGET或USE_MODEL_RENDER_TARGET，
+         * 则将模型绘制到另一个渲染目标上，并将绘制结果作为纹理应用到另一个精灵上。
+         */
+#if defined(USE_RENDER_TARGET)
+            // 如果选择将绘制操作在LAppView持有的目标上进行，则选择此选项
+            LAppView::SelectTarget useRenderTarget = LAppView::SelectTarget_ViewFrameBuffer;
+#elif defined(USE_MODEL_RENDER_TARGET)
+            // 如果选择将绘制操作在各个LAppModel持有的目标上进行，则选择此选项
+            LAppView::SelectTarget useRenderTarget = LAppView::SelectTarget_ModelFrameBuffer;
+#else
+            // 默认情况下，渲染到主帧缓冲区（通常是直接渲染到屏幕）
+            LAppView::SelectTarget useRenderTarget = LAppView::SelectTarget_None;
+#endif
+#if defined(USE_RENDER_TARGET) || defined(USE_MODEL_RENDER_TARGET)
+            // 作为给模型单独设置α（透明度）的示例，创建另一个模型实例并稍微移动其位置
+            _models.PushBack(new LAppModel());
+            _models[1]->LoadAssets(modelPath.GetRawString(), modelJsonName.GetRawString());
+            _models[1]->GetModelMatrix()->TranslateX(0.2f);
+#endif
+            LAppDelegate::GetInstance()->GetView()->SwitchRenderingTarget(useRenderTarget);
+            // 当选择其他渲染目标时的背景清除颜色
+            constexpr float clearColor[3] = { 1.0f, 1.0f, 1.0f };
+            LAppDelegate::GetInstance()->GetView()->SetRenderTargetClearColor(clearColor[0], clearColor[1], clearColor[2]);
     }
 }
 
