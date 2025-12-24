@@ -52,7 +52,7 @@ public:
      * @brief 获取 Live2D 模型的 Canvas 宽度像素 (在 Live2D 坐标系下)
      * @return Canvas 宽度
      */
-    Live2D::Cubism::Framework::csmFloat32 GetModelCanvasWidthPixel() const
+    [[nodiscard]] Live2D::Cubism::Framework::csmFloat32 GetModelCanvasWidthPixel() const
     {
         // _model 是 CubismModel 的基类指针
         return _model ? _model->GetCanvasWidthPixel() : 0.0f;
@@ -62,7 +62,7 @@ public:
      * @brief 获取 Live2D 模型的 Canvas 高度像素 (在 Live2D 坐标系下)
      * @return Canvas 高度
      */
-    Live2D::Cubism::Framework::csmFloat32 GetModelCanvasHeightPixel() const
+    [[nodiscard]] Live2D::Cubism::Framework::csmFloat32 GetModelCanvasHeightPixel() const
     {
         return _model ? _model->GetCanvasHeightPixel() : 0.0f;
     }

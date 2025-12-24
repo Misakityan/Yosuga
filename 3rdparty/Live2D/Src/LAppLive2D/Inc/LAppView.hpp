@@ -94,28 +94,36 @@ public:
     *
     * @param[in]       deviceX            デバイスX座標
     */
-    float TransformViewX(float deviceX) const;
+    [[nodiscard]] float TransformViewX(float deviceX) const;
 
     /**
     * @brief Y座標をView座標に変換する。
     *
     * @param[in]       deviceY            デバイスY座標
     */
-    float TransformViewY(float deviceY) const;
+    [[nodiscard]] float TransformViewY(float deviceY) const;
 
     /**
     * @brief X座標をScreen座標に変換する。
     *
     * @param[in]       deviceX            デバイスX座標
     */
-    float TransformScreenX(float deviceX) const;
+    [[nodiscard]] float TransformScreenX(float deviceX) const;
 
     /**
     * @brief Y座標をScreen座標に変換する。
     *
     * @param[in]       deviceY            デバイスY座標
     */
-    float TransformScreenY(float deviceY) const;
+    [[nodiscard]] float TransformScreenY(float deviceY) const;
+
+    /**
+     * @brief 检测坐标是否在模型上（跨平台穿透功能核心）
+     * @param deviceX 设备坐标X（鼠标位置）
+     * @param deviceY 设备坐标Y
+     * @return 是否击中模型
+     */
+    [[nodiscard]] bool IsModelHit(float deviceX, float deviceY) const;
 
     /**
      * @brief   モデル1体を描画する直前にコールされる
@@ -131,7 +139,7 @@ public:
      * @brief   別レンダリングターゲットにモデルを描画するサンプルで
      *           描画時のαを決定する
      */
-    float GetSpriteAlpha(int assign) const;
+    [[nodiscard]] float GetSpriteAlpha(int assign) const;
 
     /**
      * @brief レンダリング先を切り替える

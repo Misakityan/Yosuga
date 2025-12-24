@@ -20,13 +20,16 @@ ModelPage::ModelPage(QWidget *parent)
     setWindowTitle("ModelPage");
 
 
-    modelUrlEdit = new ElaLineEdit(this);
+    modelUrlEdit = new ElaLineEdit(this);       // 模型Url Edit
     modelUrlEdit->setFixedWidth(300);
     modelUrlEdit->setPlaceholderText("用于显示当前的模型Url");
+
     modelChoosePushButton = new ElaPushButton("选择模型", this);
     modelChoosePushButton->setToolTip("选择.model3.json结尾的文件");
+
     modelUsePushButton = new ElaPushButton("使用模型", this);
     modelUsePushButton->setToolTip("使用选择的模型或Url对应的模型");
+
     ElaScrollPageArea *modelSetArea = new ElaScrollPageArea(this);
     QHBoxLayout *modelSetLayout = new QHBoxLayout(modelSetArea);
     ElaText *modelSetText = new ElaText("模型设置", this);
@@ -37,6 +40,30 @@ ModelPage::ModelPage(QWidget *parent)
     modelSetLayout->addWidget(modelChoosePushButton);
     modelSetLayout->addWidget(modelUsePushButton);
     modelSetLayout->addSpacing(10);
+
+    // 创建滑块控件和标签
+    ElaText *modelSizeText = new ElaText("模型大小比例设置", this);
+    modelSizeText->setTextPixelSize(15);
+    modelSlider = new ElaSlider(this);          // 滑块(用于设置模型实时大小)
+    modelSlider->setRange(0, 99);          // 设置范围
+    modelSlider->setValue(85);                      // 设置默认值
+    modelSlider->setOrientation(Qt::Horizontal);  // 水平方向
+    // 创建独立的区域容器
+    ElaScrollPageArea *modelSliderArea = new ElaScrollPageArea(this);
+    QHBoxLayout *modelSliderLayout = new QHBoxLayout(modelSliderArea);
+
+    // 添加到布局(加一个标签显示数值)
+    ElaText *modelSliderValueText = new ElaText("85%", this);
+    modelSliderValueText->setTextPixelSize(14);
+    connect(modelSlider, &ElaSlider::valueChanged, this, [modelSliderValueText](const int value){
+        modelSliderValueText->setText(QString("%1%").arg(value + 1));
+        LAppLive2DManager::GetInstance()->ModelSizeChange(100 - value);       // 实时更新模型大小
+    });
+    modelSliderLayout->addWidget(modelSizeText);
+    modelSliderLayout->addWidget(modelSlider);
+    modelSliderLayout->addWidget(modelSliderValueText);
+    modelSliderLayout->addStretch();  // 让内容靠左
+
     connect(modelChoosePushButton, &ElaPushButton::clicked, this, [this]() {
         // 创建对话框对象（使用 heap 分配，由 Qt 对象树管理内存）
         auto *fileDialog = new QFileDialog(this);
@@ -140,6 +167,7 @@ ModelPage::ModelPage(QWidget *parent)
     centralWidget->setWindowTitle("模型设置");
     QVBoxLayout *centerLayout = new QVBoxLayout(centralWidget);
     centerLayout->addWidget(modelSetArea);
+    centerLayout->addWidget(modelSliderArea);
     centerLayout->addStretch();
     centerLayout->setContentsMargins(0, 0, 0, 0);
     addCentralWidget(centralWidget, true, true, 0);

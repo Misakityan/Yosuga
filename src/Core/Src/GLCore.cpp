@@ -61,7 +61,7 @@ GLCore::GLCore(int w, int h, QWidget *parent)
     TextRenderer::getInstance()->setGravity(600.0f);     // 更快的下坠速度
     TextRenderer::getInstance()->setDampFactor(0.85f);   // 更强的弹性效果
 
-    // this->setWindowFlag(Qt::FramelessWindowHint); // 设置无边框窗口
+    this->setWindowFlag(Qt::FramelessWindowHint); // 设置无边框窗口
     this->setWindowFlag(Qt::WindowStaysOnTopHint); // 设置窗口始终在顶部
     this->setWindowFlag(Qt::Tool); // 隐藏应用程序图标
     this->setAttribute(Qt::WA_TranslucentBackground); // 设置窗口背景透明

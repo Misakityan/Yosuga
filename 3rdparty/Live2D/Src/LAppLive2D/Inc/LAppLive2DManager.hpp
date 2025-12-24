@@ -39,23 +39,22 @@ public:
 
     /**
     * @brief   Resources フォルダにあるモデルフォルダ名をセットする
-    *
-    * 
     * 无需多言，这个也宣布弃用了，这个函数功能是自动扫描路径下所有模型
     */
+    [[deprecated("Do not use")]]
     void SetUpModel();
 
     /**
     * @brief   Resources フォルダにあるモデルフォルダ名を取得する
     *
     */
-    Csm::csmVector<Csm::csmString> GetModelDir() const;
+    [[nodiscard]] Csm::csmVector<Csm::csmString> GetModelDir() const;
 
     /**
     * @brief   Resources フォルダにあるモデルフォルダのサイズを取得する
     *
     */
-    Csm::csmInt32 GetModelDirSize() const;
+    [[nodiscard]] Csm::csmInt32 GetModelDirSize() const;
 
     /**
     * @brief   現在のシーンで保持しているモデルを返す
@@ -63,7 +62,7 @@ public:
     * @param[in]   no  モデルリストのインデックス値
     * @return      モデルのインスタンスを返す。インデックス値が範囲外の場合はNULLを返す。
     */
-    LAppModel* GetModel(Csm::csmUint32 no) const;
+    [[nodiscard]] LAppModel* GetModel(Csm::csmUint32 no) const;
 
     /**
     * @brief   現在のシーンで保持しているすべてのモデルを解放する
@@ -110,16 +109,31 @@ public:
     [[deprecated("如需使用，请在单线程中使用本函数")]]
     void LoadModelFromPath(const std::string& modelPath, const std::string& fileName);
 
-    // 仅在内存中加载模型，不干扰当前运行状态（供子线程调用）
+    /**
+     * 模型显示大小比例实时缩放接口
+     * @param Sacle 缩放比例
+     */
+    void ModelSizeChange(int Sacle);
+
+    /**
+     * @brief 从指定路径加载模型 仅在内存中加载模型，不干扰当前运行状态（供子线程调用）
+     * @param modelPath 模型文件路径
+     * @param fileName  模型文件名称
+     * @return 模型实例
+     */
     LAppModel* LoadModelInstance(const std::string& modelPath, const std::string& fileName);
 
-    // 将已经加载好的模型应用到系统中（供主线程调用）
+    /**
+     * @brief   模型加载完成后，将模型挂载到系统中
+     * @param model 模型实例
+     */
     void MountLoadedModel(LAppModel* model);
 
     /**
     * @brief   次のシーンに切り替える<br>
     *           サンプルアプリケーションではモデルセットの切り替えを行う。
     */
+    [[deprecated("Do not use")]]
     void NextScene();
 
     /**
@@ -132,6 +146,7 @@ public:
     * 至于为什么修改，原生的SDK是自动查找指定目录的模型文件，自动加载的
     * 但这样就与实际使用的需求大不相同，我们需要能够手动选择
     */
+    [[deprecated("Use LoadModelFromPath()")]]
     void ChangeScene(Csm::csmInt32 index);
 
     /**
@@ -151,7 +166,7 @@ public:
      * @brief   モデル個数を得る
      * @return  所持モデル個数
      */
-    Csm::csmUint32 GetModelNum() const;
+    [[nodiscard]] Csm::csmUint32 GetModelNum() const;
 
     /**
      * @brief   viewMatrixをセットする

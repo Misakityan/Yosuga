@@ -263,6 +263,19 @@ void LAppLive2DManager::OnUpdate() const
     }
 }
 #include <AppContext.h>
+
+void LAppLive2DManager::ModelSizeChange(const int Sacle = 15)
+{
+    // 加载完后根据模型大小来重新设置当前窗口大小
+    const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / Sacle);
+    const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / Sacle);
+
+    // 确保在主线程调用 UI 相关操作
+    if(AppContext::GetGLCore()) {
+        AppContext::GetGLCore()->setWindowSize(width, height);
+    }
+    LAppPal::PrintLogLn("[APP]窗口尺寸重新设置为: W: %d H: %d", width, height);
+}
 void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const std::string& fileName) 
 {
     const csmString modelPathStr(modelPath.c_str());

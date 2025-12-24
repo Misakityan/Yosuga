@@ -12,12 +12,11 @@
 #include "ElaPushButton.h"
 #include "ElaLineEdit.h"
 #include "ElaComboBox.h"
+#include "ElaSlider.h"
 
 #include <QUrl>
 #include <utility>
 
-class ElaLineEdit;
-class ElaPushButton;
 class ModelPage final : public BasePage
 {
 Q_OBJECT
@@ -31,9 +30,11 @@ public:
 
 private:
     // 设置当前模型
-    ElaLineEdit* modelUrlEdit = nullptr;
-    ElaPushButton* modelChoosePushButton = nullptr;
-    ElaPushButton* modelUsePushButton = nullptr;
+    ElaLineEdit* modelUrlEdit = nullptr;            /// 模型Url 编辑框
+    ElaPushButton* modelChoosePushButton = nullptr; /// 选择模型按钮
+    ElaPushButton* modelUsePushButton = nullptr;    /// 使用模型按钮
+    ElaSlider* modelSlider = nullptr;               /// 滑块(用于设置模型实时大小)
+
     QUrl modelFileUrl;
     QString modelFilePathFirst;
     QString modelFilePathSecond;

@@ -17,6 +17,7 @@
 #include "LAppSprite.hpp"
 #include "LAppModel.hpp"
 
+
 using namespace std;
 using namespace LAppDefine;
 
@@ -263,6 +264,40 @@ float LAppView::TransformScreenX(float deviceX) const
 float LAppView::TransformScreenY(float deviceY) const
 {
     return _deviceToScreen->TransformY(deviceY);
+}
+
+#include "Id/CubismIdManager.hpp"
+bool LAppView::IsModelHit(const float deviceX, const float deviceY) const {
+    const LAppLive2DManager* live2DManager = LAppLive2DManager::GetInstance();
+    if (!live2DManager || live2DManager->GetModelNum() == 0) {
+        return false;
+    }
+
+    // 坐标转换（设备坐标 -> Live2D View 坐标）
+    const csmFloat32 viewX = _deviceToScreen->TransformX(deviceX);
+    const csmFloat32 viewY = _deviceToScreen->TransformY(deviceY);
+
+    // 正确获取 ID Handle（在 SDK 初始化后调用）
+    static const Csm::CubismId* bodyId = nullptr;
+    static const Csm::CubismId* headId = nullptr;
+    if (!bodyId) {
+        bodyId = CubismFramework::GetIdManager()->GetId("Body");
+        headId = CubismFramework::GetIdManager()->GetId("Head");
+    }
+
+    // 遍历所有模型进行碰撞检测
+    const csmUint32 modelCount = live2DManager->GetModelNum();
+    for (csmUint32 i = 0; i < modelCount; ++i) {
+        LAppModel* model = live2DManager->GetModel(i);
+        if (!model || !model->GetModel()) continue;
+
+        // 检查命中区域（修正：使用 SDK 提供的 ID）
+        if (model->IsHit(bodyId, viewX, viewY) || model->IsHit(headId, viewX, viewY)) {
+            return true; // 击中模型
+        }
+    }
+
+    return false; // 未击中模型
 }
 
 void LAppView::PreModelDraw(LAppModel& refModel)
