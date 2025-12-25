@@ -48,7 +48,6 @@ GLCore::GLCore(int w, int h, QWidget *parent)
     QFontDatabase::addApplicationFont("Resources/Font/ElaAwesome.ttf");
     QApplication::setFont(QFont("Microsoft YaHei", 13));
 
-
     // new一些必要的对象
     contextMenu = new Menu(this);
 
@@ -74,6 +73,10 @@ GLCore::GLCore(int w, int h, QWidget *parent)
     });
     frameTimer->start(static_cast<int>((1.0 / frameRate) * 1000)); // 使用成员变量计算间隔
 
+#ifdef Q_OS_WIN
+    // 保存窗口句柄
+    hwnd = reinterpret_cast<HWND>(this->winId());
+#endif
 
     // 启用鼠标跟踪，不启用的话鼠标按下才会回调mouseMoveEvent函数
     this->setMouseTracking(true);
@@ -160,14 +163,37 @@ void GLCore::closeEvent(QCloseEvent* event)
     event->accept();  // 确保关闭事件被接受
 }
 
+#ifdef Q_OS_WIN
+void GLCore::setWindowTransparentForMouse(bool transparent)
+{
+    if (!hwnd) return;
+
+    LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+
+    if (transparent) {
+        // 启用鼠标穿透
+        exStyle |= WS_EX_TRANSPARENT;
+        exStyle |= WS_EX_LAYERED;
+    } else {
+        // 禁用鼠标穿透
+        exStyle &= ~WS_EX_TRANSPARENT;
+        exStyle &= ~WS_EX_LAYERED;
+    }
+
+    SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
+    // 刷新窗口
+    SetWindowPos(hwnd, 0, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+}
+#endif
+
 void GLCore::mouseMoveEvent(QMouseEvent* event)
 {
-    LAppDelegate::GetInstance()->GetView()->OnTouchesMoved(
-            static_cast<float>(event->position().x()),
-            static_cast<float>(event->position().y())
-            );
+    const float x = static_cast<float>(event->position().x());
+    const float y = static_cast<float>(event->position().y());
+    LAppDelegate::GetInstance()->GetView()->OnTouchesMoved(x, y);   // 将当前鼠标位置传递给LAppDelegate
 
-    if (isLeftPressed) {
+    if (isLeftPressed) {    // 鼠标左键按下
         const QPoint newPos = event->globalPos() - currentPos;
         this->move(newPos);
     }
@@ -175,32 +201,65 @@ void GLCore::mouseMoveEvent(QMouseEvent* event)
 
 void GLCore::mousePressEvent(QMouseEvent* event)
 {
-    LAppDelegate::GetInstance()->GetView()->OnTouchesBegan(
-            static_cast<float>(event->position().x()),
-            static_cast<float>(event->position().y())
-            );
+    const float x = static_cast<float>(event->position().x());
+    const float y = static_cast<float>(event->position().y());
+    // 检测是否在模型上
+    bool onModel = false;
+    if (LAppDelegate::GetInstance() && LAppDelegate::GetInstance()->GetView()) {
+        onModel = LAppDelegate::GetInstance()->GetView()->IsModelHit(x, y);
+    }
 
     if (event->button() == Qt::LeftButton) {
-        this->isLeftPressed = true;
+        LAppDelegate::GetInstance()->GetView()->OnTouchesBegan(x, y);
         this->currentPos = event->globalPos() - this->frameGeometry().topLeft();
+        if (onModel) {
+            // 窗口拖动
+            this->isLeftPressed = true;
+#ifdef Q_OS_WIN
+            // 确保窗口不穿透
+            setWindowTransparentForMouse(false);
+#endif
+        } else {
+            // 透明区域：透传(只有WIndows完美实现了，Linux由于平台差异，只是简单实现，并没有完美透传功能)
+#ifdef Q_OS_WIN
+            // 设置窗口为鼠标穿透
+            setWindowTransparentForMouse(true);
+
+            // 发送鼠标按下事件到底层窗口
+            POINT pt = { event->globalPos().x(), event->globalPos().y() };
+            HWND hWndBelow = WindowFromPoint(pt);
+            if (hWndBelow && hWndBelow != hwnd) {
+                // 转换坐标
+                ScreenToClient(hWndBelow, &pt);
+
+                // 发送鼠标按下消息
+                PostMessage(hWndBelow, WM_LBUTTONDOWN,
+                           MK_LBUTTON, MAKELPARAM(pt.x, pt.y));
+                PostMessage(hWndBelow, WM_LBUTTONUP,
+                           0, MAKELPARAM(pt.x, pt.y));
+            }
+
+            // 恢复窗口不穿透状态（下一次鼠标移动时会重新检测）
+            QTimer::singleShot(100, this, [this]() {
+                setWindowTransparentForMouse(false);
+            });
+#endif
+            this->isLeftPressed = false;
+        }
     }
     // TODO: 右键菜单等
     if (event->button() == Qt::RightButton) {
-
         // 在鼠标右键点击的位置创建菜单，显示自定义右键菜单
         contextMenu->showMenu(event->globalPos());
         this->isRightPressed = true;
     }
-
-
 }
 
 void GLCore::mouseReleaseEvent(QMouseEvent* event)
 {
-    LAppDelegate::GetInstance()->GetView()->OnTouchesEnded(
-            static_cast<float>(event->position().x()),
-            static_cast<float>(event->position().y())
-            );
+    const float x = static_cast<float>(event->position().x());
+    const float y = static_cast<float>(event->position().y());
+    LAppDelegate::GetInstance()->GetView()->OnTouchesEnded(x, y);
 
     if (event->button() == Qt::LeftButton) {
         isLeftPressed = false;
@@ -208,7 +267,6 @@ void GLCore::mouseReleaseEvent(QMouseEvent* event)
     if (event->button() == Qt::RightButton) {
         isRightPressed = false;
     }
-
 }
 
 void GLCore::initializeGL()

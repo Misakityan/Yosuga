@@ -82,6 +82,76 @@ LAppModel::~LAppModel()
     }
     delete(_modelSetting);
 }
+
+bool LAppModel::HasHitAreas() const {
+    return _modelSetting && _modelSetting->GetHitAreasCount() > 0;
+}
+
+bool LAppModel::IsPointOnModel(const csmFloat32 x, const csmFloat32 y)
+{
+    if (_model == nullptr || _opacity < 0.1f)
+    {
+        return false;
+    }
+    // 如果有命中区域，使用HitTest(是否存在命中区域，这取决于模型是否定义这两部分信息)
+    /* 通常是这样的信息，在.model3.json当中
+    "HitAreas": [
+        {
+            "Id": "HitAreaHead",
+            "Name": "Head"
+        },
+        {
+            "Id": "HitAreaBody",
+            "Name": "Body"
+        }
+    ]
+     */
+    if (HasHitAreas())
+    {
+        // 检查常用命中区域
+        const bool hit = HitTest(LAppDefine::HitAreaNameHead, x, y) ||
+                   HitTest(LAppDefine::HitAreaNameBody, x, y);
+        if (_debugMode && hit)
+        {
+            LAppPal::PrintLogLn("[APP]Hit model via HitArea at (%.2f, %.2f)", x, y);
+        }
+        return hit;
+    }
+    // 如果没有命中区域，使用Drawable检测
+    return IsPointOnDrawable(x, y);
+}
+
+bool LAppModel::IsPointOnDrawable(const csmFloat32 x, const csmFloat32 y)
+{
+    if (_model == nullptr || _opacity < 0.01f) // 接近完全透明
+    {
+        return false;
+    }
+    // 获取所有Drawable的数量
+    const csmInt32 drawableCount = _model->GetDrawableCount();
+    // 遍历所有Drawable
+    for (csmInt32 i = 0; i < drawableCount; ++i)
+    {
+        // 获取Drawable的ID
+        const CubismIdHandle drawableId = _model->GetDrawableId(i);
+        // 检查Drawable是否可见
+        if (_model->GetDrawableDynamicFlagIsVisible(i))
+        {
+            // 使用CubismUserModel提供的IsHit函数检测
+            if (IsHit(drawableId, x, y))
+            {
+                if (_debugMode)
+                {
+                    const csmChar* drawableName = _model->GetDrawableId(i)->GetString().GetRawString();
+                    LAppPal::PrintLogLn("[APP]Hit drawable: %s at (%.2f, %.2f)",
+                                        drawableName, x, y);
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
     
 void LAppModel::LoadAssets(const csmChar* dir, const csmChar* fileName)
 {

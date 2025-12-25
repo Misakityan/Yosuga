@@ -80,5 +80,10 @@ private:
     bool isLeftPressed;             /// 鼠标左键是否按下
     bool isRightPressed;            /// 鼠标右键是否按下
     QPoint currentPos;              /// 当前鼠标位置
-
+#ifdef Q_OS_WIN
+#include <windows.h>
+private:
+    HWND hwnd;  // Windows窗口句柄
+    void setWindowTransparentForMouse(bool transparent);
+#endif
 };

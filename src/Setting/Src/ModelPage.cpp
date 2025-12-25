@@ -43,6 +43,7 @@ ModelPage::ModelPage(QWidget *parent)
 
     // 创建滑块控件和标签
     ElaText *modelSizeText = new ElaText("模型大小比例设置", this);
+    modelSizeText->setToolTip("实时调整模型大小");
     modelSizeText->setTextPixelSize(15);
     modelSlider = new ElaSlider(this);          // 滑块(用于设置模型实时大小)
     modelSlider->setRange(0, 99);          // 设置范围

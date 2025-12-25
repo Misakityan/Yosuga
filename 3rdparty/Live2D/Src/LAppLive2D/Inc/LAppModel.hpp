@@ -80,7 +80,19 @@ public:
      */
     void StopLipSync();
 
+    /**
+     * @brief 获取模型是否有命中区域定义
+     * @return 是否有命中区域
+     */
+    [[nodiscard]] bool HasHitAreas() const;
 
+    /**
+     * @brief 检测点是否在模型的任何可见部分上
+     * @param x 视图坐标X
+     * @param y 视图坐标Y
+     * @return 是否命中
+     */
+    [[nodiscard]] bool IsPointOnModel(Csm::csmFloat32 x, Csm::csmFloat32 y);
 
     /**
      * @brief model3.jsonが置かれたディレクトリとファイルパスからモデルを生成する \n
@@ -176,6 +188,15 @@ protected:
      *
      */
     void DoDraw();
+
+private:
+    /**
+     * @brief 使用Drawable检测（当没有命中区域时使用）
+     * @param x 视图坐标X
+     * @param y 视图坐标Y
+     * @return 是否命中
+     */
+    [[nodiscard]] bool IsPointOnDrawable(Csm::csmFloat32 x, Csm::csmFloat32 y);
 
 private:
     /**

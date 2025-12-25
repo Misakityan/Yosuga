@@ -1,6 +1,21 @@
-MIT License
 
 Copyright (c) 2025 Misakiotoha
+This application contains the Live2D Cubism SDK developed by Live2D Inc.
+of which the copyrights are held by Live2D Inc.
+If this application is utilized as a primary element of a business* and its annual sales made directly or indirectly by this application exceed 20 million JPY,
+you shall be obliged to execute a Publication License Agreement with Live2D Inc.
+and pay required license fees. You shall also be obliged to immediately notify Live2D Inc.
+when the annual sales exceed 20 million JPY.
+Any violation of these obligations means the utilization of Live2D Cubism SDK beyond the scope permitted by Live2D Inc.
+with regard to this application and the infringement of intellectual property rights of Live2D Inc.,
+and you may receive legal claims from Live2D Inc.
+
+*"Utilizing this application as a primary element of a business" includes but is not limited to operating a VTuber streaming business.
+It does not include streaming video contents for sales promotion.
+
+
+
+MIT License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
