@@ -25,7 +25,7 @@ QMap<QString, double> GLCore::frameRateMap = {
     {"240", 240.0}
 };
 
-GLCore::GLCore(int w, int h, QWidget *parent)
+GLCore::GLCore(const int width, const int height, QWidget *parent)
     : QOpenGLWidget(parent),
       isLeftPressed(false),    // 显式初始化
       isRightPressed(false)    // 显式初始化
@@ -52,9 +52,9 @@ GLCore::GLCore(int w, int h, QWidget *parent)
     contextMenu = new Menu(this);
 
     // 设置窗口大小
-    setFixedSize(w, h);
+    setFixedSize(width, height);
     // 设置文本渲染器窗口大小
-    TextRenderer::getInstance()->setWindowSize(w, h);
+    TextRenderer::getInstance()->setWindowSize(width, height);
     TextRenderer::getInstance()->setGlobalFont(QFont("Microsoft YaHei", 14, QFont::Bold));
     TextRenderer::getInstance()->setHoldDuration(1.0f);  // 停留1.2秒
     TextRenderer::getInstance()->setGravity(600.0f);     // 更快的下坠速度
@@ -164,8 +164,7 @@ void GLCore::closeEvent(QCloseEvent* event)
 }
 
 #ifdef Q_OS_WIN
-void GLCore::setWindowTransparentForMouse(bool transparent)
-{
+void GLCore::setWindowTransparentForMouse(const bool transparent) const {
     if (!hwnd) return;
 
     LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
@@ -182,7 +181,7 @@ void GLCore::setWindowTransparentForMouse(bool transparent)
 
     SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
     // 刷新窗口
-    SetWindowPos(hwnd, 0, 0, 0, 0, 0,
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 #endif
@@ -250,8 +249,36 @@ void GLCore::mousePressEvent(QMouseEvent* event)
     // TODO: 右键菜单等
     if (event->button() == Qt::RightButton) {
         // 在鼠标右键点击的位置创建菜单，显示自定义右键菜单
-        contextMenu->showMenu(event->globalPos());
-        this->isRightPressed = true;
+        if (onModel) {
+            contextMenu->showMenu(event->globalPos());
+            this->isRightPressed = true;
+        }
+        else {
+#ifdef Q_OS_WIN
+            // 设置窗口为鼠标穿透
+            setWindowTransparentForMouse(true);
+
+            // 发送鼠标按下事件到底层窗口
+            POINT pt = { event->globalPos().x(), event->globalPos().y() };
+            HWND hWndBelow = WindowFromPoint(pt);
+            if (hWndBelow && hWndBelow != hwnd) {
+                // 转换坐标
+                ScreenToClient(hWndBelow, &pt);
+
+                // 发送鼠标按下消息
+                PostMessage(hWndBelow, WM_LBUTTONDOWN,
+                           MK_LBUTTON, MAKELPARAM(pt.x, pt.y));
+                PostMessage(hWndBelow, WM_LBUTTONUP,
+                           0, MAKELPARAM(pt.x, pt.y));
+            }
+
+            // 恢复窗口不穿透状态（下一次鼠标移动时会重新检测）
+            QTimer::singleShot(100, this, [this]() {
+                setWindowTransparentForMouse(false);
+            });
+#endif
+            this->isRightPressed = false;
+        }
     }
 }
 

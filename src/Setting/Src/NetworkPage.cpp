@@ -3,155 +3,174 @@
 //
 
 #include "NetworkPage.h"
-
 #include <QHBoxLayout>
-
-#include "ElaComboBox.h"
-#include "ElaPlainTextEdit.h"
 #include "ElaScrollPageArea.h"
-#include "ElaSpinBox.h"
 #include "ElaText.h"
-
-#include "socketmanager.h"
-#include <QHostAddress>
 #include "ElaMessageBar.h"
+#include "websocketmanager.h"
+#include "NetWorkDO.h"
+
 NetWorkPage::NetWorkPage(QWidget* parent)
         : BasePage(parent)
 {
     // 预览窗口标题
     setWindowTitle("NetworkPage");
 
-    // ip
-    ipPushButton = new ElaPushButton("设定",this);
-    ipLineEdit = new ElaLineEdit(this);
-    ElaScrollPageArea* ipToggleSwitchArea = new ElaScrollPageArea(this);
-    QHBoxLayout* ipToggleSwitchLayout = new QHBoxLayout(ipToggleSwitchArea);
-    ElaText* ipToggleSwitchText = new ElaText("服务端IP:", this);
-    ipToggleSwitchText->setTextPixelSize(15);
-    ipToggleSwitchLayout->addWidget(ipToggleSwitchText);
-    ipToggleSwitchLayout->addWidget(ipLineEdit);
-    ipToggleSwitchLayout->addStretch();
-    connect(ipPushButton, &ElaPushButton::clicked, this, [=, this]() {
-        // 我爱lambda函数
-        QString ip_temp = ipLineEdit->text();
-        auto f_temp = [=](const QString &ip) -> bool {
-                QHostAddress addr;
-                if (addr.setAddress(ip) && addr.protocol() == QAbstractSocket::IPv4Protocol) {
-                    return true;
-                }
-                return false;
-        };
-        if(!f_temp(ip_temp)){
-            ElaMessageBar::error(ElaMessageBarType::TopLeft, "连接设置", "服务端IP格式错误", 800.0, this);
-        }
-        else{
-            SocketManager::getInstance()->setIp(ip_temp);
-            ElaMessageBar::success(ElaMessageBarType::TopRight, "连接设置", "服务端IP设置成功", 800.0, this);
-        }
-    });
-    ipToggleSwitchLayout->addWidget(ipPushButton);
-    ipToggleSwitchLayout->addSpacing(10);
-
-    // 端口
-    portPushButton = new ElaPushButton("设定",this);
-    portLineEdit = new ElaLineEdit(this);
-    ElaScrollPageArea* portToggleSwitchArea = new ElaScrollPageArea(this);
-    QHBoxLayout* portToggleSwitchLayout = new QHBoxLayout(portToggleSwitchArea);
-    ElaText* portToggleSwitchText = new ElaText("服务端端口:", this);
-    portToggleSwitchText->setTextPixelSize(15);
-    portToggleSwitchLayout->addWidget(portToggleSwitchText);
-    portToggleSwitchLayout->addWidget(portLineEdit);
-    portToggleSwitchLayout->addStretch();
-    connect(portPushButton, &ElaPushButton::clicked, this, [=, this]() {
-        QString port_temp = portLineEdit->text();
-        auto f_temp = [=](const QString &port) -> bool {
-            return port.toInt() > 0 && port.toInt() < 65535;
-        };
-        if(!f_temp(port_temp)){
-            ElaMessageBar::error(ElaMessageBarType::TopLeft, "连接设置", "服务端端口格式错误", 800.0, this);
-        }
-        else{
-            SocketManager::getInstance()->setPort(port_temp.toInt());
-            ElaMessageBar::success(ElaMessageBarType::TopRight, "连接设置", "服务端端口设置成功", 800.0, this);
-        }
-    });
-    portToggleSwitchLayout->addWidget(portPushButton);
-    portToggleSwitchLayout->addSpacing(10);
-
-    connectTestPushButton = new ElaPushButton("连通测试",this);
-    connectTestPushButton->setToolTip("测试与服务器连通性(如果成功连通会自动连上服务器)");
-    connectPushButton = new ElaPushButton("连接",this);
-    disconnectPushButton = new ElaPushButton("断开",this);
-    ElaScrollPageArea* connectTestArea = new ElaScrollPageArea(this);
-    QHBoxLayout* connectTestLayout = new QHBoxLayout(connectTestArea);
-    connectTestLayout->addWidget(connectTestPushButton);
-    connectTestLayout->addStretch();
-    connect(connectTestPushButton, &ElaPushButton::clicked, this, [=, this]() {
-        if(SocketManager::getInstance()->state() == QAbstractSocket::ConnectedState){
-            // 如果已连接
-            ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试", "已连通", 800.0, this);
-        }
-        else{
-            SocketManager::getInstance()->connectToServer();
-            // TODO:等待很短的时间，等tcp握手完成
-
-            if(SocketManager::getInstance()->state() == QAbstractSocket::ConnectedState){
-                ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试", "已连通", 800.0, this);
-            }
-            else{
-                ElaMessageBar::error(ElaMessageBarType::TopLeft, "连通测试", "未连通，请检查服务器是否开启或IP和端口信息是否正确", 1500.0, this);
-            }
-        }
-
-    });
-    connect(connectPushButton, &ElaPushButton::clicked, this, [=, this]() {
-        if(SocketManager::getInstance()->state() == QAbstractSocket::ConnectedState){
-            // 如果已连接
-            ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试", "已连接", 800.0, this);
-        }
-        if(SocketManager::getInstance()->state() == QAbstractSocket::UnconnectedState){
-            // 如果未连接
-            SocketManager::getInstance()->connectToServer();
-            if(SocketManager::getInstance()->state() == QAbstractSocket::ConnectedState){
-                ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试", "连接成功", 800.0, this);
-            }
-            else{
-                ElaMessageBar::error(ElaMessageBarType::TopLeft, "连通测试", "连接失败，请检查服务器是否开启或IP和端口信息是否正确", 1500.0, this);
-            }
-        }
-    });
-    connect(disconnectPushButton, &ElaPushButton::clicked, this, [=, this]() {
-        if(SocketManager::getInstance()->state() == QAbstractSocket::ConnectedState){
-            // 如果已连接，则断开
-            SocketManager::getInstance()->disconnectFromServer();
-            ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试", "断开成功", 800.0, this);
-        }
-        else{
-            // 如果未连接，则提示
-            ElaMessageBar::information(ElaMessageBarType::BottomRight, "连通测试", "似乎并没有连接到服务器", 800.0, this);
-        }
-    });
-    connectTestLayout->addWidget(disconnectPushButton);
-    connectTestLayout->addWidget(connectPushButton);
-    connectTestLayout->addSpacing(10);
-
-
-
-    QWidget* centralWidget = new QWidget(this);
-    centralWidget->setWindowTitle("连接设置");
-    QVBoxLayout* centerLayout = new QVBoxLayout(centralWidget);
-    centerLayout->addWidget(ipToggleSwitchArea);
-    centerLayout->addWidget(portToggleSwitchArea);
-    centerLayout->addWidget(connectTestArea);
-
-    centerLayout->addStretch();
-    centerLayout->setContentsMargins(0, 0, 0, 0);
-    addCentralWidget(centralWidget, true, true, 0);
-
+    this->initUI();     // 初始化UI
+    this->initWebSocketClient();    // 初始化websocket客户端(主要是相关的信号与槽)
 }
 
 NetWorkPage::~NetWorkPage()
 {
+
+}
+
+void NetWorkPage::initUI() {
+    // websocket UI
+    websocketPushButton = new ElaPushButton("设定",this);
+    websocketPushButton->setToolTip("设定服务端WebSocket地址");
+    websocketLineEdit = new ElaLineEdit(this);
+    websocketLineEdit->setPlaceholderText("请输入服务端WebSocket地址");
+    websocketLineEdit->setFixedWidth(300);  // 设置websocketLineEdit框的宽度
+
+    ElaScrollPageArea* websocketToggleSwitchArea = new ElaScrollPageArea(this);
+    QHBoxLayout* websocketToggleSwitchLayout = new QHBoxLayout(websocketToggleSwitchArea);
+    ElaText* websocketToggleSwitchText = new ElaText("服务端WebSocket地址:", this);
+    websocketToggleSwitchText->setTextPixelSize(15);
+    websocketToggleSwitchLayout->addWidget(websocketToggleSwitchText);
+    websocketToggleSwitchLayout->addWidget(websocketLineEdit);
+    websocketToggleSwitchLayout->addStretch();
+    websocketToggleSwitchLayout->addWidget(websocketPushButton);
+    websocketToggleSwitchLayout->addSpacing(10);
+    // 连通测试按钮
+    connectTestPushButton = new ElaPushButton("连通测试",this);
+    connectTestPushButton->setToolTip("测试与服务器连通性(如果成功连通会自动连上服务器)");
+    connectPushButton = new ElaPushButton("连接",this);
+    disconnectPushButton = new ElaPushButton("断开",this);
+    sendTestPushButton = new ElaPushButton("发送测试",this);
+    ElaScrollPageArea* connectTestArea = new ElaScrollPageArea(this);   // 创建一个滚动页面
+    QHBoxLayout* connectTestLayout = new QHBoxLayout(connectTestArea);
+    connectTestLayout->addWidget(connectTestPushButton);        // 将连通测试按钮添加到布局中
+    connectTestLayout->addStretch();                            // 添加一个空格
+    connectTestLayout->addWidget(sendTestPushButton);           // 将发送测试按钮添加到布局中
+    connectTestLayout->addWidget(disconnectPushButton);         // 将断开按钮添加到布局中
+    connectTestLayout->addWidget(connectPushButton);            // 将连接按钮添加到布局中
+    connectTestLayout->addSpacing(10);
+    // 添加到布局
+    QWidget* centralWidget = new QWidget(this);             // 中心部件
+    centralWidget->setWindowTitle("连接设置");                  // 中心部件标题
+    QVBoxLayout* centerLayout = new QVBoxLayout(centralWidget);   // 中心部件布局
+    centerLayout->addWidget(websocketToggleSwitchArea);             // 将websocketToggleSwitchArea添加到布局中
+    centerLayout->addWidget(connectTestArea);                       // 将connectTestArea添加到布局中
+
+    centerLayout->addStretch();
+    centerLayout->setContentsMargins(0, 0, 0, 0);   // 设置布局的边距
+    addCentralWidget(centralWidget, true, true, 0); // 添加中心部件
+}
+
+void NetWorkPage::initWebSocketClient() {
+    auto* client = WebSocketClient::getInstance();     // 获取单例实例(设置一个默认地址)
+    auto* netDO = NetworkDO::getInstance();
+    // 注入：将底层发送能力赋予 NetworkDO
+    netDO->registerSender([client](const QString& type, const QJsonObject& data){
+        client->sendJson(type, data);
+    });
+    // 监听：底层收到数据 -> NetworkDO 解析
+    connect(client, &WebSocketClient::jsonReceived,
+                 netDO, &NetworkDO::onDataReceived);
+
+    // 连接成功的处理
+    connect(client, &WebSocketClient::connected, this, [this]() {
+        ElaMessageBar::success(ElaMessageBarType::TopRight, "WebSocket", "连接成功", 800.0, this);
+    });
+    // 连接失败的处理
+    connect(client, &WebSocketClient::error, this, [this](const QString& errorMsg) {
+        ElaMessageBar::error(ElaMessageBarType::TopLeft, "WebSocket错误", errorMsg, 1500.0, this);
+    });
+    // 断开连接的处理
+    connect(client, &WebSocketClient::disconnected, this, [this]() {
+        ElaMessageBar::information(ElaMessageBarType::BottomRight, "WebSocket", "连接已断开", 800.0, this);
+    });
+    // 接收数据处理
+    connect(client, &WebSocketClient::jsonReceived, this, [](const QString &type, const QJsonObject &data) {
+        qDebug() << "Received JSON data: " << type << " " << data;
+    });
+
+    connect(websocketPushButton, &ElaPushButton::clicked, this, [this, client]() {   // 设置服务端websocket地址
+        const QUrl url(websocketLineEdit->text().trimmed());      // 从LineEdit中获取服务端websocket地址
+        // 初始化客户端
+        if (client->setConfiguration(url)) {
+            ElaMessageBar::success(ElaMessageBarType::TopRight, "连接设置",
+            QString("服务器地址已设置为: %1").arg(url.toString()), 800.0, this);
+            return;
+        }
+        ElaMessageBar::warning(ElaMessageBarType::TopLeft, "连接设置",
+            QString("服务器地址存在问题"), 800.0, this);
+    });
+
+    connect(connectTestPushButton, &ElaPushButton::clicked, this, [this, client]() {
+        if (client->isConnected()) {
+            ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试",
+                "当前已连通", 800.0, this);
+            return;
+        }
+        client->connectToServer();      // 连接
+        // 使用定时器延迟检查连接状态
+        QTimer::singleShot(1000, this, [this, client]() {
+            if (client->isConnected()) {
+                ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试",
+                    "连通测试成功", 800.0, this);
+            } else {
+                ElaMessageBar::warning(ElaMessageBarType::TopLeft, "连通测试",
+                    "无法连接到服务器，请检查地址和服务器状态", 1500.0, this);
+            }
+        });
+    });
+    connect(connectPushButton, &ElaPushButton::clicked, this, [this, client]() {
+        if (client->isConnected()) {
+            ElaMessageBar::information(ElaMessageBarType::TopRight, "连接状态",
+                "已连接，无需重复连接", 800.0, this);
+            return;
+        }
+        const QString urlStr = websocketLineEdit->text().trimmed();
+        if (urlStr.isEmpty()) {
+            ElaMessageBar::warning(ElaMessageBarType::TopLeft, "连接",
+                "请先设置服务器地址", 800.0, this);
+            return;
+        }
+        // 确保使用正确的地址
+        client->setConfiguration(QUrl(urlStr));
+        client->connectToServer();
+        // 连接结果会在 connected/error 信号中处理
+        ElaMessageBar::information(ElaMessageBarType::TopRight, "连接",
+            "正在连接服务器...", 800.0, this);
+    });
+    connect(disconnectPushButton, &ElaPushButton::clicked, this, [this, client]() {
+        if (client->isConnected()) {
+            client->disconnectFromServer();
+            ElaMessageBar::success(ElaMessageBarType::TopRight, "断开连接",
+                "已断开连接", 800.0, this);
+        } else {
+            ElaMessageBar::information(ElaMessageBarType::BottomRight, "断开连接",
+                "当前未连接", 800.0, this);
+        }
+    });
+    connect(sendTestPushButton, &ElaPushButton::clicked, this, [this, netDO]() {
+        // 创建数据包
+        AudioDataPacket packet;
+        packet.text = "Hello, World!";
+        // 填入元数据
+        packet.sampleRate = 16000;
+        packet.channels = 1;
+        packet.duration = 2500; // 2.5秒
+        // 填入音频数据 (模拟从文件或录音设备读取的二进制数据)
+        QByteArray rawAudioData;
+        rawAudioData.append("...这里是真实的PCM或WAV二进制数据...");
+        packet.audioData = rawAudioData;
+        netDO->sendAudioPacket(packet);
+        ElaMessageBar::success(ElaMessageBarType::TopRight, "发送测试",
+                "已成功发送数据包", 1000.0, this);
+    });
 }
 
 

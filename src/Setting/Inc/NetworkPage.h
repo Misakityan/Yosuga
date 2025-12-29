@@ -1,9 +1,7 @@
 //
 // Created by Administrator on 2025/3/2.
 //
-
-#ifndef AIRI_DESKTOPGRIL_NETWORKPAGE_H
-#define AIRI_DESKTOPGRIL_NETWORKPAGE_H
+#pragma once
 
 #include "BasePage.h"
 #include "ElaPushButton.h"
@@ -11,23 +9,23 @@
 
 class ElaPushButton;
 class ElaLineEdit;
-class NetWorkPage : public BasePage
+class NetWorkPage final : public BasePage
 {
 Q_OBJECT
 public:
     Q_INVOKABLE explicit NetWorkPage(QWidget* parent = nullptr);
-    ~NetWorkPage();
+    ~NetWorkPage() override;
+
+private:
+    void initUI();
+    void initWebSocketClient();
 
 
 
 private:
-    // IP控件
-    ElaPushButton* ipPushButton = nullptr;
-    ElaLineEdit* ipLineEdit = nullptr;
-
-    // 端口控件
-    ElaPushButton* portPushButton = nullptr;
-    ElaLineEdit* portLineEdit = nullptr;
+    // websocket 控件
+    ElaPushButton* websocketPushButton = nullptr;
+    ElaLineEdit* websocketLineEdit = nullptr;
 
     // 连接测试
     ElaPushButton* connectTestPushButton = nullptr;
@@ -36,7 +34,6 @@ private:
     // 断开
     ElaPushButton* disconnectPushButton = nullptr;
 
+    // 发送测试按钮
+    ElaPushButton* sendTestPushButton = nullptr;
 };
-
-
-#endif //AIRI_DESKTOPGRIL_NETWORKPAGE_H

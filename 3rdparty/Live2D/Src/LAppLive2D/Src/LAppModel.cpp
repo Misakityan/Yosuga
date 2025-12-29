@@ -94,6 +94,8 @@ bool LAppModel::IsPointOnModel(const csmFloat32 x, const csmFloat32 y)
         return false;
     }
     // 如果有命中区域，使用HitTest(是否存在命中区域，这取决于模型是否定义这两部分信息)
+    // 不过不少模型不会写或者是不写入腿部信息，因此实际会出现点击腿部的时候判定为在模型外面，这并不是bug
+    // 也就是尽量依赖HitAreas，以此获得最好的性能，但是如果模型没有定义，则使用IsPointOnDrawable
     /* 通常是这样的信息，在.model3.json当中
     "HitAreas": [
         {

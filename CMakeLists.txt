@@ -30,6 +30,8 @@ file(GLOB_RECURSE YosugaSrc
         "src/AudioHandle/Inc/*.h"
         "src/Menu/Src/*.cpp"
         "src/Menu/Inc/*.h"
+        "src/DAO/Inc/*.h"
+        "src/DAO/Src/*.cpp"
         "src/NetWorkHandle/Src/*.cpp"
         "src/NetWorkHandle/Inc/*.h"
         "src/Setting/Src/*.cpp"
@@ -193,6 +195,7 @@ target_include_directories(${PROJECT_NAME}
         src/Setting/Inc
         src/Render/TextRender/Inc
         src/Core/Inc
+        src/DAO/Inc
 )
 
 
