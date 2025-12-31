@@ -59,11 +59,11 @@ public:
     void setGlobalFont(const QFont &newFont);
 
     /**
-     * 参数建议值：
-        效果类型	    gravity	    dampFactor	holdDuration
-        柔和下落	    600.0f	    0.85f	    1.0f
-        快速坠落	    1200.0f	    0.6f	    0.3f
-        弹性效果	    900.0f	    0.75f	    0.8f
+     * 参数建议值：<br>
+        效果类型	    gravity	    dampFactor	holdDuration <br>
+        柔和下落	    600.0f	    0.85f	    1.0f            <br>
+        快速坠落	    1200.0f	    0.6f	    0.3f            <br>
+        弹性效果	    900.0f	    0.75f	    0.8f            <br>
         真实物理模拟	980.0f	    0.82f	    0.5f
      */
     void setHoldDuration(const float seconds) { defaultHoldDuration = seconds; }

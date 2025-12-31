@@ -58,8 +58,8 @@ struct ControlDataPacket {
  */
 class NetworkDO final : public QObject
 {
-    Q_OBJECT
-    Q_DISABLE_COPY(NetworkDO) // 禁用拷贝
+Q_OBJECT
+Q_DISABLE_COPY(NetworkDO) // 禁用拷贝
 
 public:
     // 单例访问点
@@ -80,9 +80,9 @@ public:
 
 signals:
     // 业务接收信号
-    void audioPacketReceived(const AudioDataPacket& packet);
-    void controlPacketReceived(const ControlDataPacket& packet);
-    void errorOccurred(const QString& errorMsg);
+    void audioPacketReceived(const AudioDataPacket& packet);            // 音频数据准备完成信号
+    void controlPacketReceived(const ControlDataPacket& packet);        // 控制数据准备完成信号
+    void errorOccurred(const QString& errorMsg);                        // 错误信号
 
 public slots:
     // 接收底层 JSON 数据

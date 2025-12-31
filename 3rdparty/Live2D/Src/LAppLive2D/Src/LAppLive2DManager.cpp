@@ -72,6 +72,9 @@ LAppLive2DManager::LAppLive2DManager()
     // Resources/Haru/   Haru.model3.json
     LoadModelFromPath("Resources/Live2DModels/KITU17/", "KITU17.model3.json");      // 默认加载的模型
     //ChangeScene(_sceneIndex);
+    if (DebugLogEnable) {
+        _models[0]->DumpMotionMap();
+    }
 }
 
 LAppLive2DManager::~LAppLive2DManager()
@@ -217,11 +220,10 @@ void LAppLive2DManager::OnTap(csmFloat32 x, csmFloat32 y)
 
 void LAppLive2DManager::OnUpdate() const
 {
-    int width, height;
     //glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &width, &height);
 
-    width = LAppDelegate::GetInstance()->GetWindow()->width();
-    height = LAppDelegate::GetInstance()->GetWindow()->height();
+    int width = LAppDelegate::GetInstance()->GetWindow()->width();
+    int height = LAppDelegate::GetInstance()->GetWindow()->height();
 
     csmUint32 modelCount = _models.GetSize();
     for (csmUint32 i = 0; i < modelCount; ++i)
@@ -263,7 +265,6 @@ void LAppLive2DManager::OnUpdate() const
     }
 }
 #include <AppContext.h>
-
 void LAppLive2DManager::ModelSizeChange(const int Sacle = 15)
 {
     // 加载完后根据模型大小来重新设置当前窗口大小
@@ -345,6 +346,10 @@ void LAppLive2DManager::MountLoadedModel(LAppModel* model)
     ReleaseAllModel();
     // 加入新模型
     _models.PushBack(model);
+
+    if (DebugLogEnable) {
+        _models[0]->DumpMotionMap();    // 打印模型动作列表
+    }
 
     // 加载完后根据模型大小来重新设置当前窗口大小
     const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);

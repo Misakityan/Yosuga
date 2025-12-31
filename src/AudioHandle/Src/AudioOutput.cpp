@@ -6,15 +6,20 @@
 #include <QMediaDevices>
 #include <QDataStream>
 
-AudioOutput *AudioOutput::instance = nullptr;
+QScopedPointer<AudioOutput> AudioOutput::instance;      // 使用QScopedPointer去管理单例，自动析构
+QMutex AudioOutput::mutex;
 
 AudioOutput *AudioOutput::getInstance()
 {
     // 懒汉式(单线程播放，无需考虑加锁)
-    if (instance == nullptr) {
-        instance = new AudioOutput();
+    if (instance.isNull()) {    // 若未访问
+        QMutexLocker locker(&mutex);
+        if (instance.isNull()) {
+            // 使用reset初始化
+            instance.reset(new AudioOutput());
+        }
     }
-    return instance;
+    return instance.data();     // 返回单例实例
 }
 
 AudioOutput::AudioOutput(QObject *parent) : QObject(parent), mediaPlayer(nullptr), audioOutput(nullptr), audioSink(nullptr), audioBuffer(nullptr)
@@ -39,7 +44,6 @@ AudioOutput::AudioOutput(QObject *parent) : QObject(parent), mediaPlayer(nullptr
     format.setSampleFormat(QAudioFormat::Int16);    // 采样格式
     audioSink = new QAudioSink(QMediaDevices::defaultAudioOutput(), format, this);
     audioBuffer = new QBuffer(this);
-
 }
 
 

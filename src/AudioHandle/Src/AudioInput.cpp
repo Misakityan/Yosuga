@@ -7,14 +7,18 @@
 #include <QtMath>
 #include <QtEndian> // 用于处理字节序
 
-AudioInput *AudioInput::instance = nullptr;
+QScopedPointer<AudioInput> AudioInput::instance;
+QMutex AudioInput::mutex;
 AudioInput *AudioInput::getInstance()
 {
     // 懒汉式 依旧单线程无需加锁
-    if (instance == nullptr) {
-        instance = new AudioInput();
+    if (instance.isNull()) {
+        QMutexLocker locker(&mutex);
+        if (instance.isNull()) {
+            instance.reset(new AudioInput);
+        }
     }
-    return instance;
+    return instance.data();
 }
 
 AudioInput::AudioInput(QObject *parent) : QObject(parent)
@@ -79,7 +83,7 @@ void AudioInput::startAudio()
     // 调大缓冲区以避免溢出
     m_audioSource->setBufferSize(128000);
 
-    // start() 返回一个 QIODevice，我们可以从中读取数据
+    // start() 返回一个 QIODevice，可以从中读取数据
     m_ioDevice = m_audioSource->start();
 
     if (m_ioDevice) {
@@ -107,8 +111,8 @@ void AudioInput::stopAudio()
     if (!m_rawPCMData.isEmpty()) {
         wavData = generateWavHeader(m_rawPCMData.size());
         wavData.append(m_rawPCMData);
-
-        // 如果需要保存文件
+#ifdef QT_DEBUG
+        // 如果需要保存文件(Debug下启用)
         if (!m_outputFilePath.isEmpty()) {
             QFile file(m_outputFilePath);
             if (file.open(QIODevice::WriteOnly)) {
@@ -117,10 +121,9 @@ void AudioInput::stopAudio()
                 qDebug() << "Saved WAV to:" << m_outputFilePath;
             }
         }
-
+#endif
         m_rawPCMData.clear();
     }
-
     isAutoRecording = false;
     isAutoThreshold = false;
 
@@ -138,18 +141,28 @@ void AudioInput::onReadyRead()
     QByteArray data = m_ioDevice->readAll();
     if (data.isEmpty()) return;
 
-    // 1. 保存原始 PCM 数据
+    // 保存原始 PCM 数据
     m_rawPCMData.append(data);
 
-    // 2. 计算 RMS (仅用于分析，取最后一小段或者整体计算，这里计算当前块的RMS)
-    m_rmsValue = calculateRMS(data);
+    // 计算 RMS (仅用于分析，计算当前块的RMS)
+    const qreal currentRms = calculateRMS(data);
+    m_rmsValue = currentRms;
+    // 计算平滑RMS (用于防止低频杂波突然打断静音检测)
+    constexpr qreal alpha = 0.3;    // 70% 历史权重, 30% 当前权重
+    if (qFuzzyIsNull(m_smoothRms)) {
+        // 如果是第一帧数据，直接赋值，避免从0开始慢慢爬升
+        m_smoothRms = currentRms;
+    } else {
+        // 新值 = (旧值 * (1 - alpha)) + (当前值 * alpha)
+        m_smoothRms = (m_smoothRms * (1.0 - alpha)) + (currentRms * alpha);
+    }
 
-    // 3. 自动停止逻辑 (VAD)
+    // 自动停止逻辑 (VAD)
     if (isAutoRecording) {
         // 输出 RMS 用于调试
-        // qDebug() << "RMS:" << m_rmsValue;
+        qDebug() << "Raw:" << currentRms << " Smooth:" << m_smoothRms;
 
-        if (m_rmsValue < m_silenceThreshold) {
+        if (m_smoothRms < m_silenceThreshold) {
             // 静音状态
             if (!m_silenceTimer->isActive()) {
                 m_silenceTimer->start(m_silenceDuration);
@@ -161,10 +174,10 @@ void AudioInput::onReadyRead()
         }
     }
 
-    // 4. 自动阈值计算逻辑
+    // 自动阈值计算逻辑
     if (isAutoThreshold) {
-        m_rmsValues.push_back(m_rmsValue);
-        emit rmsRealValue(m_rmsValue);
+        m_rmsValues.push_back(m_smoothRms);
+        emit rmsRealValue(m_smoothRms);
     }
 }
 
@@ -172,7 +185,7 @@ qreal AudioInput::calculateRMS(const QByteArray& buffer)
 {
     if (buffer.isEmpty()) return 0;
 
-    // 假设是 Int16 格式 (16位深)
+    // 设定为 Int16 格式 (16位深)
     // 如果是 Stereo，数据排列是 L R L R...
     // 简单的 RMS 计算可以将所有通道数据视为一个长序列
 
@@ -242,7 +255,7 @@ void AudioInput::startAutoStopAudio(const qreal silenceThreshold, const int sile
 }
 
 // 启动阈值计算
-void AudioInput::startAutoThresholdClu(int Duration)
+void AudioInput::startAutoThresholdClu(const int Duration)
 {
     isAutoThreshold = true;
     m_rmsValues.clear();
@@ -250,19 +263,36 @@ void AudioInput::startAutoThresholdClu(int Duration)
     m_thresholdTimer->start(Duration);
 }
 
+/**
+ * 2025.12.30重构 Misaki
+ * 从均值阈值计算的基础上增加了N倍标准差
+ * 即阈值 = 均值 + N * 标准差(N取3)
+ */
 void AudioInput::thresholdTimeout()
 {
     isAutoThreshold = false;
     stopAudio(); // 内部会处理 stop
 
-    if (!m_rmsValues.empty()) {
-        const double sum = std::accumulate(m_rmsValues.begin(), m_rmsValues.end(), 0.0);
-        const double avg = sum / m_rmsValues.size();
-        m_silenceThreshold = avg + 500.0; // 这里的 500 是经验值，可以根据需要调整
-        emit thresholdCalculated(m_silenceThreshold);
-    } else {
+    if (m_rmsValues.empty()) {
         emit thresholdCalculated(0);
+        return;
     }
+    // 计算均值
+    const double mean = std::accumulate(m_rmsValues.begin(), m_rmsValues.end(), 0.0) / m_rmsValues.size();
+    // 计算标准差
+    const double sq_sum = std::inner_product(m_rmsValues.begin(), m_rmsValues.end(), m_rmsValues.begin(), 0.0);
+    double variance = (sq_sum / m_rmsValues.size()) - (mean * mean);
+    // 防止浮点误差导致负数
+    if (variance < 0) variance = 0;
+    const double stdDev = std::sqrt(variance);
+    // 阈值 = 均值 + 2 * 标准差
+    const double bestThreshold = mean + 3 * stdDev;
+    m_silenceThreshold = std::max(bestThreshold, 150.0);
+    m_silenceThreshold = std::min(m_silenceThreshold, 30000.0);
+    qDebug() << "Auto Threshold Calc -> Mean:" << mean
+             << " StdDev:" << stdDev
+             << " Result:" << m_silenceThreshold;
+    emit thresholdCalculated(m_silenceThreshold);
 }
 
 QByteArray AudioInput::generateWavHeader(const quint32 dataSize) const {
@@ -285,7 +315,7 @@ QByteArray AudioInput::generateWavHeader(const quint32 dataSize) const {
 
     header.numChannels = static_cast<quint16>(m_format.channelCount());
     header.sampleRate = static_cast<quint32>(m_format.sampleRate());
-    header.bitsPerSample = 16; // 我们强制使用了 Int16
+    header.bitsPerSample = 16; // 强制使用了 Int16
 
     header.byteRate = header.sampleRate * header.numChannels * (header.bitsPerSample / 8);
     header.blockAlign = header.numChannels * (header.bitsPerSample / 8);

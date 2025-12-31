@@ -14,7 +14,9 @@
 #include <Rendering/OpenGL/CubismOffscreenSurface_OpenGLES2.hpp>
 
 #include "LAppWavFileHandler.hpp"
-
+#include <map>
+#include <vector>
+#include <string>
 /**
  * @brief ユーザーが実際に使用するモデルの実装クラス<br>
  *         モデル生成、機能コンポーネント生成、更新処理とレンダリングの呼び出しを行う。
@@ -34,19 +36,35 @@ public:
      */
     virtual ~LAppModel();
 
+    struct MotionInfo {
+        std::string FileName;    // 动作的文件名
+        int SequenceId;          // 组内的播放序列号
+    };
+
+    /**
+     * 获取按组分类的动作映射表
+     * Key: 组名 (如 "Idle"), Value: 动作信息列表
+     */
+    std::map<std::string, std::vector<MotionInfo>> GetMotionMap();
+
+    /**
+     * 在控制台打印当前模型所有的动作组和序列信息
+     */
+    void DumpMotionMap();
+
     /**
      * @brief 获得Idle动画总数量
      * @author Misaki
      * @return int
      */
-    int getIdleMotionCount();
+    [[nodiscard]] int getIdleMotionCount() const;
 
     /**
      * @brief 获得TapBody动画总数量
      * @author Misaki
      * @return int
      */
-    int getTapBodyMotionCount();
+    [[nodiscard]] int getTapBodyMotionCount() const;
 
     /**
      * @brief 获取 Live2D 模型的 Canvas 宽度像素 (在 Live2D 坐标系下)
@@ -198,6 +216,8 @@ private:
      */
     [[nodiscard]] bool IsPointOnDrawable(Csm::csmFloat32 x, Csm::csmFloat32 y);
 
+    // 辅助函数: 从完整路径提取纯文件名
+    std::string ExtractFileName(const std::string& fullPath);
 private:
     /**
      * @brief model3.jsonからモデルを生成する。<br>
@@ -265,7 +285,6 @@ private:
     // 低通滤波器参数
     Live2D::Cubism::Framework::csmFloat32 alpha = 0.8f; // 滤波系数，范围在0到1之间，值越小，平滑效果越强
     Live2D::Cubism::Framework::csmFloat32 filteredValue = 0.0f; // 滤波后的值
-
 
     Csm::Rendering::CubismOffscreenSurface_OpenGLES2  _renderBuffer;   ///< フレームバッファ以外の描画先
 };

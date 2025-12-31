@@ -10,6 +10,8 @@
 #include <QTimer>
 #include <QDir>
 #include <vector>
+#include <QScopedPointer>
+#include <QMutex>
 
 /**
  * @brief  录音模块
@@ -21,15 +23,15 @@
 class AudioInput : public QObject
 {
 Q_OBJECT
-
+Q_DISABLE_COPY(AudioInput)      // 禁用拷贝
 private:
     /**
      * @brief  构造函数
      * @param parent
      */
     explicit AudioInput(QObject *parent = nullptr);
-    static AudioInput* instance;
-
+    static QScopedPointer<AudioInput> instance;
+    static QMutex mutex;
 public:
     /**
      * @brief  获取实例
@@ -145,5 +147,6 @@ private:
     std::vector<qreal> m_rmsValues;         /// RMS值vector
     qreal m_silenceThreshold = 1200;        /// 静音阈值
     int m_silenceDuration = 1500;           /// 静音持续时间
+    qreal m_smoothRms = 0.0;                /// 平滑RMS值(用于防止低频杂波突然打断静音检测)
 };
 

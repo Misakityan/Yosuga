@@ -83,7 +83,8 @@ AudioPage::AudioPage(QWidget* parent)
 
     ElaScrollPageArea* audioInputProgressBarArea = new ElaScrollPageArea(this);
     QHBoxLayout* audioInputProgressBarLayout = new QHBoxLayout(audioInputProgressBarArea);
-    ElaText* audioInputProgressBarText = new ElaText("录音阈值", this);
+    ElaText* audioInputProgressBarText = new ElaText("静音检测阈值", this);
+    audioInputProgressBarText->setToolTip("测试当前环境的静音阈值，用于对话中的静音检测");
     audioInputProgressBarText->setTextPixelSize(15);
     audioInputProgressBarLayout->addWidget(audioInputProgressBarText);
     audioInputProgressBarLayout->addWidget(audioInputProgressBar, 1);

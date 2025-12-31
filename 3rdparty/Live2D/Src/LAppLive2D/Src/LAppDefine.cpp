@@ -38,7 +38,7 @@ namespace LAppDefine {
 //    const csmChar* PowerImageName = "close.png";
 
     // モデル定義------------------------------------------
-    // 外部定義ファイル(json)と合わせる
+    // 外部定義ファイル(json)と合わせる  [要注意：部分模型可能缺失下面的某个字段或者全部缺失]
     const csmChar* MotionGroupIdle = "Idle"; // アイドリング
     const csmChar* MotionGroupTapBody = "TapBody"; // 体をタップしたとき
 

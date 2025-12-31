@@ -9,6 +9,8 @@
 #include <QAudioSink>       // 音频输出组件， 用于原始数据播放
 #include <QUrl>
 #include <QBuffer>
+#include <QScopedPointer>
+#include <QMutex>
 
 /**
  * @brief 音频播放模块
@@ -23,6 +25,7 @@
 class AudioOutput : public QObject
 {
 Q_OBJECT
+Q_DISABLE_COPY(AudioOutput)     // 禁用拷贝
 private:
     /**
      * 构造函数私有化
@@ -30,7 +33,8 @@ private:
      */
     explicit AudioOutput(QObject *parent = nullptr);        // 并不将本模块挂在对象树当中，因为本模块为单例类，内存自行管理
 
-    static AudioOutput *instance;       // 单例类
+    static QScopedPointer<AudioOutput> instance;       // 单例类
+    static QMutex mutex;
 public:
     static AudioOutput *getInstance();
 

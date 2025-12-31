@@ -660,6 +660,102 @@ CubismMotionQueueEntryHandle LAppModel::StartRandomMotion(const csmChar* group, 
     return StartMotion(group, no, priority, onFinishedMotionHandler);
 }
 
+std::map<std::string, std::vector<LAppModel::MotionInfo>> LAppModel::GetMotionMap()
+{
+    std::map<std::string, std::vector<MotionInfo>> motionMap;
+    if (_modelSetting == nullptr)
+    {
+        return motionMap;
+    }
+    // 获取组总数
+    const int groupCount = _modelSetting->GetMotionGroupCount();
+    for (int i = 0; i < groupCount; i++)
+    {
+        // 获取组名 (从 const char* 转 std::string)
+        const char* groupNameChar = _modelSetting->GetMotionGroupName(i);
+        std::string groupName(groupNameChar);
+        // 获取该组动作数
+        const int motionCount = _modelSetting->GetMotionCount(groupNameChar);
+
+        std::vector<MotionInfo> motionList;
+        for (int j = 0; j < motionCount; j++)
+        {
+            MotionInfo info;
+            info.SequenceId = j;
+            // 获取路径并处理
+            const char* filePath = _modelSetting->GetMotionFileName(groupNameChar, j);
+            if (filePath)
+            {
+                info.FileName = ExtractFileName(std::string(filePath));
+            }
+            motionList.push_back(info);
+        }
+        motionMap[groupName] = motionList;
+    }
+    return motionMap;
+}
+
+void LAppModel::DumpMotionMap()
+{
+    if (_modelSetting == nullptr)
+    {
+        LAppPal::PrintLogLn("[Live2D Debug] Cannot dump MotionMap: Model assets not loaded yet.");
+        return;
+    }
+    // 获取映射表
+    const std::map<std::string, std::vector<MotionInfo>> motionMap = GetMotionMap();
+
+    if (motionMap.empty())
+    {
+        // 模型动作栏目为空，大概率是模型本身没带动作
+        printf("[Live2D Debug] MotionMap is empty. Make sure the model is loaded correctly.\n");
+        return;
+    }
+
+    printf("\n================ [Live2D Motion Dump] =================\n");
+
+    // 遍历 Map (组)
+    for (auto & it : motionMap)
+    {
+        const std::string& groupName = it.first;
+        const std::vector<MotionInfo>& motions = it.second;
+
+        printf("Group: [%s] (%zu motions)\n", groupName.c_str(), motions.size());
+
+        // 遍历 Vector (组内动作)
+        for (const auto& info : motions)
+        {
+            // 打印 序列号 和 处理后的文件名
+            printf("  ├── ID: %d | Name: %s\n",
+                   info.SequenceId,
+                   info.FileName.c_str());
+        }
+        printf("  └── (End of %s)\n", groupName.c_str());
+    }
+    printf("=======================================================\n\n");
+}
+
+// 辅助函数：处理 csmString 路径截取
+std::string LAppModel::ExtractFileName(const std::string& fullPath)
+{
+    // 提取带后缀的文件名 (例如从 "motions/special_03.motion3.json" 变为 "special_03.motion3.json")
+    const size_t lastSlash = fullPath.find_last_of("/\\");
+    std::string fileName = (lastSlash == std::string::npos) ? fullPath : fullPath.substr(lastSlash + 1);
+    // 循环去掉后缀，直到名字中不再包含 ".json" 或 ".motion3"
+    // Live2D 动作文件通常以 .motion3.json 结尾
+    const std::string extensions[] = { ".json", ".motion3" };
+
+    for (const std::string& ext : extensions)
+    {
+        const size_t pos = fileName.find(ext);
+        if (pos != std::string::npos)
+        {
+            fileName = fileName.substr(0, pos);
+        }
+    }
+    return fileName;
+}
+
 
 /** 讲一下两种动画的不同
      *  MotionGroupIdle：
@@ -678,13 +774,11 @@ CubismMotionQueueEntryHandle LAppModel::StartRandomMotion(const csmChar* group, 
      *  下面的两个函数分别就是获取这两种动作的数量的，不同的动作对应着一个序号，播放的序号不可以超过下面函数返回的最大值
      *  要注意的是部分模型可能没有动画
      */
-int LAppModel::getIdleMotionCount()
-{
+int LAppModel::getIdleMotionCount() const {
     return _modelSetting->GetMotionCount(MotionGroupIdle);
 }
 
-int LAppModel::getTapBodyMotionCount()
-{
+int LAppModel::getTapBodyMotionCount() const {
     return _modelSetting->GetMotionCount(MotionGroupTapBody);
 }
 

@@ -51,7 +51,7 @@ make
 关于授权 <br>
 本项目采用多重授权结构：
 
-1. 原创代码部分：MIT License
+1. 原创代码部分：MIT License <br>
    src/*.*
 
 2. 依赖库：
