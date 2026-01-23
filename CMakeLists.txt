@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 project(Yosuga VERSION 1.0)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 20)      # C++20
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)

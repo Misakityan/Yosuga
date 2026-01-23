@@ -7,10 +7,7 @@
  * 虽然变得方便了，但也带来了危险，如果你肆意通过中介指针去调用GLCore的成员函数
  * 可能会导致渲染问题等
  */
-
-#ifndef YOSUGA_APPCONTEXT_H
-#define YOSUGA_APPCONTEXT_H
-
+#pragma once
 #include "GLCore.h"
 
 class AppContext {
@@ -24,5 +21,3 @@ public:
 private:
     static inline GLCore* s_glCore = nullptr; // C++17 内联静态成员
 };
-
-#endif //YOSUGA_APPCONTEXT_H

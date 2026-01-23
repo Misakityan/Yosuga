@@ -25,34 +25,8 @@
 #include <QMutex>
 #include <functional>
 
-/**
- * 数据传输对象 (DTO) 定义
- */
-// 音频文本捆绑数据结构
-struct AudioDataPacket {
-    QString text;           // 文本内容
-    QByteArray audioData;   // 音频原始数据 (二进制)
-    int sampleRate;         // 采样率
-    int channels;           // 通道数
-    qint64 duration;        // 时长 (ms)
-
-    AudioDataPacket() : sampleRate(16000), channels(1), duration(0) {}
-};
-
-//  控制指令数据结构 (预留)
-enum class ControlType {
-    Click,
-    Input,
-    Scroll
-};
-
-struct ControlDataPacket {
-    ControlType action;
-    int x;
-    int y;
-    QString extraData;
-};
-
+#include "DataTransferObjectBase.h"
+#include "AudioDataTransferObject.h"
 /**
  * NetworkDO
  */
@@ -75,13 +49,11 @@ public:
     void registerSender(SenderFunc sender);
 
     // 业务发送函数
-    void sendAudioPacket(const AudioDataPacket& packet);
-    void sendControlPacket(const ControlDataPacket& packet);
+    void sendPacket(const DataTransferObjectBase& packet);
 
 signals:
     // 业务接收信号
-    void audioPacketReceived(const AudioDataPacket& packet);            // 音频数据准备完成信号
-    void controlPacketReceived(const ControlDataPacket& packet);        // 控制数据准备完成信号
+    void audioPacketReceived(const AudioDataTransferObject& packet);    // 音频数据准备完成信号
     void errorOccurred(const QString& errorMsg);                        // 错误信号
 
 public slots:
@@ -92,10 +64,6 @@ public:
 private:
     // 构造/析构函数私有化
     explicit NetworkDO(QObject *parent = nullptr);
-
-    // 内部处理逻辑
-    void handleAudioMessage(const QJsonObject& data);
-
     static QScopedPointer<NetworkDO> m_instance;
     static QMutex m_mutex;
 

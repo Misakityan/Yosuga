@@ -65,7 +65,6 @@ GLCore::GLCore(const int width, const int height, QWidget *parent)
     this->setWindowFlag(Qt::Tool); // 隐藏应用程序图标
     this->setAttribute(Qt::WA_TranslucentBackground); // 设置窗口背景透明
 
-
     // 帧率控制初始化
     frameTimer = new QTimer(this);
     connect(frameTimer, &QTimer::timeout, [&]() {

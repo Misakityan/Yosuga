@@ -48,71 +48,31 @@ void NetworkDO::registerSender(SenderFunc sender)
     m_sender = std::move(sender);
 }
 
-void NetworkDO::sendAudioPacket(const AudioDataPacket& packet)
+void NetworkDO::sendPacket(const DataTransferObjectBase &packet)
 {
     // 检查发送器是否已注入
     if (!m_sender) {
         emit errorOccurred("Sender not registered! Call registerSender() first.");
         return;
     }
-
-    // 封装数据 (DTO -> JSON)
-    QJsonObject dataObj;
-    dataObj["text"] = packet.text;
-    // 音频转 Base64 字符串传输
-    dataObj["audio"] = QString::fromLatin1(packet.audioData.toBase64());
-    dataObj["sampleRate"] = packet.sampleRate;
-    dataObj["channels"] = packet.channels;
-    dataObj["duration"] = packet.duration;
-
-    // 调用底层发送 (解耦)
-    // "textAudio" 是与后端约定的协议类型
-    m_sender("textAudio", dataObj);
+    // 依赖注入 + 多态实现完美解耦
+    m_sender(packet.type(), packet.toJson());
 }
 
-void NetworkDO::sendControlPacket(const ControlDataPacket& packet)
-{
-    if (!m_sender) return;
-
-    QJsonObject dataObj;
-    dataObj["action"] = static_cast<int>(packet.action);
-    dataObj["x"] = packet.x;
-    dataObj["y"] = packet.y;
-
-    m_sender("control", dataObj);
-}
-
+// 接受并没有完全解耦
 void NetworkDO::onDataReceived(const QString& type, const QJsonObject& data)
 {
-    // 根据类型分发
-    if (type == "textAudio") {
-        handleAudioMessage(data);
+    // 根据类型分发数据包
+    // 为什么分发做在这里，而不是统一数据再去分发，如果不在这里做分发通知，分开发信号，而使用统一的信号
+    // 如果有多个观察者，让观察者自动识别数据包，这会导致信号广播，容易引起性能问题(因为这里依赖的是Qt的信号与槽机制)
+    // TODO: 在此处使用工厂模式，根据type内容快速创建对应的对象
+    if (type == "audio_data") {
+        emit audioPacketReceived(AudioDataTransferObject::fromJson(data));      // 构造并发送音频对象
     }
-    else if (type == "control") {
-        // handleControlMessage(data);
+    else if (type == "control_data") {
+
     }
     else {
         qWarning() << "[NetworkDO] Received unknown type:" << type;
     }
-}
-
-void NetworkDO::handleAudioMessage(const QJsonObject& data)
-{
-    AudioDataPacket packet;
-
-    // 解析基础字段 (JSON -> DTO)
-    packet.text = data.value("text").toString();
-    packet.sampleRate = data.value("sampleRate").toInt(16000);
-    packet.channels = data.value("channels").toInt(1);
-    // 注意类型转换，确保 long long 精度
-    packet.duration = static_cast<qint64>(data.value("duration").toDouble());
-
-    // 解析音频 (Base64 -> Binary)
-    QString base64Audio = data.value("audio").toString();
-    if (!base64Audio.isEmpty()) {
-        packet.audioData = QByteArray::fromBase64(base64Audio.toLatin1());
-    }
-
-    // 通知上层业务
-    emit audioPacketReceived(packet);
 }

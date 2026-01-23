@@ -4,8 +4,24 @@
 ![GitHub issues](https://img.shields.io/github/issues/Misakityan/Yosuga)
 ![GitHub stars](https://img.shields.io/github/stars/Misakityan/Yosuga?style=social)
 
+欢迎访问本项目。
+
+首先向你介绍一下Yosuga这个项目：
+
+本项目的作者是Misakiotoha(みさきおとは[見崎音羽])。[call me "Misaki" でいいよ]
+
+之所以叫Yosuga，这个词来源日语当中的单词"縁"的发音，其意思是"缘分，关系"。
+
+本项目分为三个部分：
+1. Yosuga：这是项目的前端部分，是Yosuga与用户交互的一层，采用C++20 + Qt6.6.3编写，使用到的核心外部库为Live2D For C++ SDK。
+2. Yosuga_server：这是项目的后端部分，是Yosuga的核心，采用python3.11编写，使用到的外部库较多，负责联系项目的各个部分。
+3. Yosuga_embedded：这是项目的拓展部分，使得Yosuga对嵌入式设备拥有几乎完全的自定义控制能力，采用C语言编写，只使用到了cJSON库，平台无关，增强了Yosuga与外界的交互能力。
+
+_**本项目为Yosuga.**_
+
 本项目使用CMake构建，基于C++Qt6.6.3以及Live2D官方SDK(CubismSdkForNative-5-r.4.1)实现Live2D桌面宠物
 (本项目由Yosuga[Qt5] 发展更新而来，项目架构与代码都有所不同，最显著的特点是本项目支持多平台)
+
 环境为:
 
 - cmake version 3.5

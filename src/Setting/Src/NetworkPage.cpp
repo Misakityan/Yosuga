@@ -117,13 +117,13 @@ void NetWorkPage::initWebSocketClient() {
         client->connectToServer();      // 连接
         // 使用定时器延迟检查连接状态
         QTimer::singleShot(1000, this, [this, client]() {
-            if (client->isConnected()) {
-                ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试",
-                    "连通测试成功", 800.0, this);
-            } else {
+            if (!client->isConnected()) {
                 ElaMessageBar::warning(ElaMessageBarType::TopLeft, "连通测试",
                     "无法连接到服务器，请检查地址和服务器状态", 1500.0, this);
+                return;
             }
+            ElaMessageBar::success(ElaMessageBarType::TopRight, "连通测试",
+                    "连通测试成功", 800.0, this);
         });
     });
     connect(connectPushButton, &ElaPushButton::clicked, this, [this, client]() {
@@ -146,28 +146,29 @@ void NetWorkPage::initWebSocketClient() {
             "正在连接服务器...", 800.0, this);
     });
     connect(disconnectPushButton, &ElaPushButton::clicked, this, [this, client]() {
-        if (client->isConnected()) {
-            client->disconnectFromServer();
-            ElaMessageBar::success(ElaMessageBarType::TopRight, "断开连接",
-                "已断开连接", 800.0, this);
-        } else {
+        if (!client->isConnected()) {
             ElaMessageBar::information(ElaMessageBarType::BottomRight, "断开连接",
                 "当前未连接", 800.0, this);
+            return;
         }
+        client->disconnectFromServer();
+        ElaMessageBar::success(ElaMessageBarType::TopRight, "断开连接",
+            "已断开连接", 800.0, this);
     });
-    connect(sendTestPushButton, &ElaPushButton::clicked, this, [this, netDO]() {
+    connect(sendTestPushButton, &ElaPushButton::clicked, this, [this, netDO, client]() {
+        if (!client->isConnected()) {
+            ElaMessageBar::information(ElaMessageBarType::BottomRight, "断开连接",
+                "当前未连接", 800.0, this);
+            return;
+        }
         // 创建数据包
-        AudioDataPacket packet;
-        packet.text = "Hello, World!";
-        // 填入元数据
-        packet.sampleRate = 16000;
-        packet.channels = 1;
-        packet.duration = 2500; // 2.5秒
-        // 填入音频数据 (模拟从文件或录音设备读取的二进制数据)
-        QByteArray rawAudioData;
-        rawAudioData.append("...这里是真实的PCM或WAV二进制数据...");
-        packet.audioData = rawAudioData;
-        netDO->sendAudioPacket(packet);
+        AudioDataTransferObject packet;
+        packet.setData("Owner", "client")
+            .setData("isStream", true)
+            .setData("sequence", 42)
+            .setData("text", "Hello World")
+            .setData("data", "SGVsbG8gV29ybGQ=");   // 填入音频数据 (Hello World的base64)
+        netDO->sendPacket(packet);
         ElaMessageBar::success(ElaMessageBarType::TopRight, "发送测试",
                 "已成功发送数据包", 1000.0, this);
     });
