@@ -81,7 +81,7 @@ GLCore::GLCore(const int width, const int height, QWidget *parent)
     this->setMouseTracking(true);
 
     // 连接一些必要的信号与槽
-    connect(contextMenu, &Menu::closeMainWindow, this, &GLCore::closeGL);
+    connect(contextMenu, &Menu::closeMainWindow, this, &GLCore::closeGL);   // 关闭窗口信号
 
     // 注册当前实例到中介类
     AppContext::RegisterGLCore(this);

@@ -1,0 +1,124 @@
+#pragma once
+
+#include <cctype>
+#include <string>
+#include <map>
+
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
+#ifdef __APPLE__
+#import <Carbon/Carbon.h>
+#endif
+
+#ifdef __linux__
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
+#endif
+
+#include <atomic>
+#include <chrono>
+#include <set>
+#include <thread>
+
+namespace Robot {
+
+#ifdef __APPLE__
+typedef CGKeyCode KeyCode;
+#endif
+
+#ifdef _WIN32
+typedef WORD KeyCode;
+#endif
+
+#ifdef __linux__
+    typedef KeySym KeyCode;
+#endif
+
+class Keyboard {
+ public:
+  enum SpecialKey {
+    BACKSPACE,
+    ENTER,
+    TAB,
+    ESCAPE,
+    UP,
+    DOWN,
+    RIGHT,
+    LEFT,
+    META,
+    ALT,
+    CONTROL,
+    SHIFT,
+    CAPSLOCK,
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12
+  };
+
+  static const char INVALID_ASCII;
+
+  Keyboard() = delete;
+  virtual ~Keyboard() = default;
+
+  static void Type(const std::string& query);
+
+  static void TypeHumanLike(const std::string& query);
+
+  static void Click(char asciiChar);
+  static void Click(SpecialKey specialKey);
+
+  static void HoldStart(char asciiChar);
+  static void HoldStart(SpecialKey specialKey);
+  static void HoldStop(char asciiChar);
+  static void HoldStop(SpecialKey specialKey);
+
+  static void Press(char asciiChar);
+  static void Press(SpecialKey specialKey);
+
+  static void Release(char asciiChar);
+  static void Release(SpecialKey specialKey);
+
+  static char VirtualKeyToAscii(KeyCode virtualKey);
+  static SpecialKey VirtualKeyToSpecialKey(KeyCode virtualKey);
+
+ private:
+  static std::thread keyPressThread;
+  static std::atomic<bool> continueHolding;
+  static std::set<char> heldAsciiChars;
+  static std::set<SpecialKey> heldSpecialKeys;
+
+  static void KeyHoldThread();
+
+  static int delay;
+
+  static KeyCode AsciiToVirtualKey(char asciiChar);
+
+  static KeyCode SpecialKeyToVirtualKey(SpecialKey specialKey);
+
+  static std::map<SpecialKey, KeyCode> specialKeyToVirtualKeyMap;
+    // Platform-specific implementations
+#ifdef __linux__
+    static Display* display;
+    static Window rootWindow;
+    static void InitializeX11();
+    static void CleanupX11();
+#endif
+  // note: windows alternative doesn't use map
+#ifdef __APPLE__
+  static std::map<char, int> asciiToVirtualKeyMap;
+#endif
+};
+
+}  // namespace Robot

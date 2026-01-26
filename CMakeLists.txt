@@ -8,9 +8,6 @@ set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "/home/misaki/Qt6.3/6.6.3/gcc_64")    # 设置Qt6安装路径(此处请根据你的Qt6安装位置填写)
 
-# 添加ElaWidgetTools UI库项目
-add_subdirectory(3rdparty/ElaWidgetTools)
-
 # 设置是否为debug模式 默认为Debug
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -40,6 +37,9 @@ file(GLOB_RECURSE YosugaSrc
         "src/Render/TextRender/Inc/*.h"
         "src/Core/Src/*.cpp"
         "src/Core/Inc/*.h"
+        "src/Utils/Inc/*.hpp"
+        "src/Utils/Inc/*.h"
+        "src/Utils/Src/*.cpp"
 )
 
 # 查找Qt6模块以及其他必须模块
@@ -47,16 +47,18 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
-        Network
-        Svg
-        SerialPort
-        WebSockets
-        Multimedia
+        Network             # 网络
+        Svg                 # svg
+        SerialPort          # 串口
+        WebSockets          # websocket
+        Multimedia          # 音频
         OpenGLWidgets
         Concurrent
         REQUIRED)
 find_package(OpenGL REQUIRED)
 
+add_subdirectory(3rdparty/ElaWidgetTools)   # 添加ElaWidgetTools UI库
+add_subdirectory(3rdparty/autogui-cpp)      # 添加autogui-cpp GUI自动化库
 
 add_executable(${PROJECT_NAME} main.cpp ${LAppLive2D} ${YosugaSrc})
 
@@ -166,6 +168,7 @@ target_link_libraries(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
         ElaWidgetTools
+        autogui-cpp
         Qt::Core
         Qt::Gui
         Qt::Widgets
@@ -196,6 +199,7 @@ target_include_directories(${PROJECT_NAME}
         src/Render/TextRender/Inc
         src/Core/Inc
         src/DAO/Inc
+        src/Utils/Inc
 )
 
 
@@ -262,7 +266,7 @@ if(PLAT STREQUAL "windows")
         set(WINDEPLOYQT_CMD "${WINDEPLOYQT_CMD} \"$<TARGET_FILE_DIR:${PROJECT_NAME}>\"")
 
         # 添加自定义命令运行windeployqt
-        # 最简单的版本 - 只传递目录
+        # 只传递目录
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND "${WINDEPLOYQT_EXE}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
                 COMMENT "Running windeployqt to deploy Qt dependencies..."

@@ -2,8 +2,7 @@
 // Created by Administrator on 2025/3/2.
 //
 
-#ifndef AIRI_DESKTOPGRIL_UISETTING_H
-#define AIRI_DESKTOPGRIL_UISETTING_H
+#pragma once
 
 #include "BasePage.h"
 class ElaRadioButton;
@@ -25,5 +24,3 @@ private:
     ElaRadioButton* _maximumButton = nullptr;
     ElaRadioButton* _autoButton = nullptr;
 };
-
-#endif //AIRI_DESKTOPGRIL_UISETTING_H

@@ -44,7 +44,7 @@ NetworkDO::~NetworkDO()
 // 业务逻辑实现
 void NetworkDO::registerSender(SenderFunc sender)
 {
-    QMutexLocker locker(&m_mutex); // 简单保护一下赋值
+    QMutexLocker locker(&m_mutex); // 加个小锁，简单保护一下赋值
     m_sender = std::move(sender);
 }
 

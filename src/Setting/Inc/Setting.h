@@ -2,8 +2,7 @@
 // Created by Administrator on 2025/1/21.
 //
 
-#ifndef AIRI_DESKTOPGRIL_SETTING_H
-#define AIRI_DESKTOPGRIL_SETTING_H
+#pragma once
 
 #include <ElaWidget.h>
 #include <ElaWindow.h>
@@ -64,5 +63,3 @@ private:
 
 };
 
-
-#endif //AIRI_DESKTOPGRIL_SETTING_H

@@ -1,0 +1,12 @@
+# IDEs
+/.idea
+/example/.idea
+.vscode
+
+# Build files
+/cmake-build-debug
+/cmake-build-release
+/example/cmake-build-debug
+
+
+/build
