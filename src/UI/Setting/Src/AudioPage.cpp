@@ -110,7 +110,7 @@ AudioPage::AudioPage(QWidget* parent)
         constexpr float duration = 6.0f; // 音频时长
         TextRenderer::getInstance()->addText(text, 40.0f, QColor("#FF69B4"), duration);
         LAppLive2DManager::GetInstance()->StartLipSync("Resources/TestFiles/test.wav");
-        AudioOutput::getInstance()->playAudio(QUrl("Resources/TestFiles/test.wav"));
+        AudioOutput::getInstance()->playUrl(QUrl("Resources/TestFiles/test.wav"));
     });
 
 

@@ -69,8 +69,8 @@ void NetworkDO::onDataReceived(const QString& type, const QJsonObject& data)
     if (type == "audio_data") {
         emit audioPacketReceived(AudioDataTransferObject::fromJson(data));      // 构造并发送音频对象
     }
-    else if (type == "control_data") {
-
+    else if (type == "auto_agent") {
+        emit autoAgentPacketReceived(AutoAgentDataObject::fromJson(data));
     }
     else {
         qWarning() << "[NetworkDO] Received unknown type:" << type;

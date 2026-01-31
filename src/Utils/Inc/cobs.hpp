@@ -14,6 +14,8 @@
  * 之所以使用COBS编码而不是常用的字符填充法，这是因为字符填充法会使得数据包的大小无法确定，并且往往会使得数据包变得更大。
  *
  * 本模块为COBS的C++实现，而在Yosuga_embedded当中，则使用了cobs的C实现。
+ *
+ * C++20
  */
 #pragma once
 #include <cstdint>

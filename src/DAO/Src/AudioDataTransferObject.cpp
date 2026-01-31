@@ -3,29 +3,30 @@
 //
 #include "AudioDataTransferObject.h"
 #include <QJsonValue>
+#include <utility>
 // 构造函数实现（初始化列表）
-AudioDataTransferObject::AudioDataTransferObject(const QString& owner,
+AudioDataTransferObject::AudioDataTransferObject(QString owner,
                                                bool isStream,
                                                bool isStart,
                                                bool isEnd,
                                                int sequence,
-                                               const QByteArray& data,
+                                               QByteArray data,
                                                int sampleRate,
                                                int channelCount,
                                                int bitDepth,
                                                double duration,
-                                               const QString& text)
-    : m_owner(owner)
+                                               QString text)
+    : m_owner(std::move(owner))
     , m_isStream(isStream)
     , m_isStart(isStart)
     , m_isEnd(isEnd)
     , m_sequence(sequence)
-    , m_data(data)
+    , m_data(std::move(data))
     , m_sampleRate(sampleRate)
     , m_channelCount(channelCount)
     , m_bitDepth(bitDepth)
     , m_duration(duration)
-    , m_text(text) {
+    , m_text(std::move(text)) {
 }
 
 // 静态工厂方法：从 JSON 反序列化
@@ -86,7 +87,7 @@ AudioDataTransferObject& AudioDataTransferObject::setData(const QString& key,
     } else if (key == "sequence") {
         m_sequence = value.toInt();
     } else if (key == "data") {
-        // 这里要求已是 base64 字符串
+        // 这里要求传入的是 base64 字符串
         m_data = QByteArray::fromBase64(value.toString().toUtf8());
     } else if (key == "sampleRate") {
         m_sampleRate = value.toInt();
@@ -98,7 +99,9 @@ AudioDataTransferObject& AudioDataTransferObject::setData(const QString& key,
         m_duration = value.toDouble();
     } else if (key == "text") {
         m_text = value.toString();
+    } else {
+        qWarning() << "Unknown key or invalid value type:" << key << value;
     }
-    // 如果 key 不存在，默认忽略
+
     return *this;  // 返回自身引用，支持链式调用
 }

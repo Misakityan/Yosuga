@@ -19,17 +19,17 @@ class QJsonObject;
 class AudioDataTransferObject final : public DataTransferObjectBase{
 public:
     // 构造函数（带默认值）
-    explicit AudioDataTransferObject(const QString& owner = "client",
+    explicit AudioDataTransferObject(QString  owner = "client",
                                    bool isStream = false,
                                    bool isStart = false,
                                    bool isEnd = false,
                                    int sequence = 0,
-                                   const QByteArray& data = {},
+                                   QByteArray  data = {},
                                    int sampleRate = 16000,
                                    int channelCount = 1,
                                    int bitDepth = 16,
                                    double duration = 0.0,
-                                   const QString& text = "");
+                                   QString  text = "");
     // 静态工厂方法
     static AudioDataTransferObject fromJson(const QJsonObject& json);
 

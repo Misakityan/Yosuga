@@ -20,6 +20,8 @@ WebSocketManager::WebSocketManager(QObject *parent)
 {
     // 配置 WebSocket
     m_socket->setParent(this); // 确保 socket 也在工作线程
+    m_socket->setMaxAllowedIncomingFrameSize(50 * 1024 * 1024);     // 单帧最大 50MB        // 防止发送大数据包导致websocket断开
+    m_socket->setMaxAllowedIncomingMessageSize(50 * 1024 * 1024);   // 完整消息最大 50MB
     // 连接信号
     connect(m_socket, &QWebSocket::connected,
             this, &WebSocketManager::onConnected);

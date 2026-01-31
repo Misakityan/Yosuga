@@ -23,18 +23,20 @@ file(GLOB_RECURSE LAppLive2D
 )
 file(GLOB_RECURSE YosugaSrc
         CONFIGURE_DEPENDS
-        "src/AudioHandle/Src/*.cpp"
-        "src/AudioHandle/Inc/*.h"
-        "src/Menu/Src/*.cpp"
-        "src/Menu/Inc/*.h"
+        "src/Handle/AudioHandle/Src/*.cpp"
+        "src/Handle/AudioHandle/Inc/*.h"
+        "src/Handle/NetWorkHandle/Src/*.cpp"
+        "src/Handle/NetWorkHandle/Inc/*.h"
+        "src/Handle/DataObjectHandle/Src/*.cpp"
+        "src/Handle/DataObjectHandle/Inc/*.h"
+        "src/UI/Menu/Src/*.cpp"
+        "src/UI/Menu/Inc/*.h"
         "src/DAO/Inc/*.h"
         "src/DAO/Src/*.cpp"
-        "src/NetWorkHandle/Src/*.cpp"
-        "src/NetWorkHandle/Inc/*.h"
-        "src/Setting/Src/*.cpp"
-        "src/Setting/Inc/*.h"
-        "src/Render/TextRender/Src/*.cpp"
-        "src/Render/TextRender/Inc/*.h"
+        "src/UI/Setting/Src/*.cpp"
+        "src/UI/Setting/Inc/*.h"
+        "src/UI/Render/TextRender/Src/*.cpp"
+        "src/UI/Render/TextRender/Inc/*.h"
         "src/Core/Src/*.cpp"
         "src/Core/Inc/*.h"
         "src/Utils/Inc/*.hpp"
@@ -192,11 +194,13 @@ target_include_directories(${PROJECT_NAME}
         3rdparty/Live2D/Src/Core/include
         3rdparty/Live2D/Src/stb
         3rdparty/Live2D/Src/LAppLive2D/Inc
-        src/AudioHandle/Inc
-        src/Menu/Inc
-        src/NetWorkHandle/Inc
-        src/Setting/Inc
-        src/Render/TextRender/Inc
+        3rdparty/autogui-cpp/src
+        src/Handle/AudioHandle/Inc
+        src/Handle/NetWorkHandle/Inc
+        src/Handle/DataObjectHandle/Inc
+        src/UI/Menu/Inc
+        src/UI/Setting/Inc
+        src/UI/Render/TextRender/Inc
         src/Core/Inc
         src/DAO/Inc
         src/Utils/Inc

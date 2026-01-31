@@ -9,6 +9,8 @@
 #include "ElaMessageBar.h"
 #include "websocketmanager.h"
 #include "NetWorkDO.h"
+#include <QFile>
+#include "AudioDataHandle.h"
 
 NetWorkPage::NetWorkPage(QWidget* parent)
         : BasePage(parent)
@@ -71,6 +73,7 @@ void NetWorkPage::initUI() {
 void NetWorkPage::initWebSocketClient() {
     auto* client = WebSocketClient::getInstance();     // 获取单例实例(设置一个默认地址)
     auto* netDO = NetworkDO::getInstance();
+    AudioDataHandle::getInstance();         // 初始化音频处理模块
     // 注入：将底层发送能力赋予 NetworkDO
     netDO->registerSender([client](const QString& type, const QJsonObject& data){
         client->sendJson(type, data);
@@ -78,7 +81,6 @@ void NetWorkPage::initWebSocketClient() {
     // 监听：底层收到数据 -> NetworkDO 解析
     connect(client, &WebSocketClient::jsonReceived,
                  netDO, &NetworkDO::onDataReceived);
-
     // 连接成功的处理
     connect(client, &WebSocketClient::connected, this, [this]() {
         ElaMessageBar::success(ElaMessageBarType::TopRight, "WebSocket", "连接成功", 800.0, this);
@@ -162,12 +164,21 @@ void NetWorkPage::initWebSocketClient() {
             return;
         }
         // 创建数据包
+        QFile test_wav_file("Resources/TestFiles/test.wav");
+        if (!test_wav_file.open(QIODevice::ReadOnly)) {
+            qDebug() << "Failed to open test.wav";
+            ElaMessageBar::warning(ElaMessageBarType::TopLeft, "发送测试",
+            "无法打开测试音频文件", 1500.0, this);
+            return;
+        }
+        QByteArray wavData = test_wav_file.readAll();
+        QString base64Str = QString::fromLatin1(wavData.toBase64());
         AudioDataTransferObject packet;
         packet.setData("Owner", "client")
             .setData("isStream", true)
             .setData("sequence", 42)
             .setData("text", "Hello World")
-            .setData("data", "SGVsbG8gV29ybGQ=");   // 填入音频数据 (Hello World的base64)
+            .setData("data", base64Str);   // 填入测试音频数据
         netDO->sendPacket(packet);
         ElaMessageBar::success(ElaMessageBarType::TopRight, "发送测试",
                 "已成功发送数据包", 1000.0, this);
