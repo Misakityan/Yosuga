@@ -10,7 +10,6 @@
 #include "websocketmanager.h"
 #include "NetWorkDO.h"
 #include <QFile>
-#include "AudioDataHandle.h"
 
 NetWorkPage::NetWorkPage(QWidget* parent)
         : BasePage(parent)
@@ -73,7 +72,6 @@ void NetWorkPage::initUI() {
 void NetWorkPage::initWebSocketClient() {
     auto* client = WebSocketClient::getInstance();     // 获取单例实例(设置一个默认地址)
     auto* netDO = NetworkDO::getInstance();
-    AudioDataHandle::getInstance();         // 初始化音频处理模块
     // 注入：将底层发送能力赋予 NetworkDO
     netDO->registerSender([client](const QString& type, const QJsonObject& data){
         client->sendJson(type, data);

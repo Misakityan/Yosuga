@@ -28,6 +28,7 @@
 #include "DataTransferObjectBase.h"
 #include "AudioDataTransferObject.h"
 #include "AutoAgentDataObject.h"
+#include "ScreenShotDataTransferObject.h"
 /**
  * NetworkDO
  */
@@ -54,8 +55,9 @@ public:
 
 signals:
     // 业务接收信号
-    void audioPacketReceived(const AudioDataTransferObject& packet);    // 音频数据准备完成信号
-    void autoAgentPacketReceived(const AutoAgentDataObject& packet);    // 自动代理数据包接收信号
+    void audioPacketReceived(const AudioDataTransferObject& packet);            // 音频数据准备完成信号
+    void autoAgentPacketReceived(const AutoAgentDataObject& packet);            // 自动代理数据包接收信号
+    void screenShotPacketReceived(const ScreenShotDataTransferObject& packet);  // 截图数据包接收信号
 
     void errorOccurred(const QString& errorMsg);                        // 错误信号
 

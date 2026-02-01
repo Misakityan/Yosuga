@@ -53,7 +53,7 @@ void AudioInput::setAudioSettings(const int rate, const int channels)
 {
     m_format.setSampleRate(rate);
     m_format.setChannelCount(channels);
-    // 重要：Qt6 默认可能是 float，为了生成标准 WAV 且方便计算 RMS，强制设为 Int16
+    // 为了生成标准 WAV 且方便计算 RMS，强制设为 Int16
     m_format.setSampleFormat(QAudioFormat::Int16);
 
     // 检查设备是否支持该格式，不支持则使用最接近的

@@ -65,12 +65,15 @@ void NetworkDO::onDataReceived(const QString& type, const QJsonObject& data)
     // 根据类型分发数据包
     // 为什么分发做在这里，而不是统一数据再去分发，如果不在这里做分发通知，分开发信号，而使用统一的信号
     // 如果有多个观察者，让观察者自动识别数据包，这会导致信号广播，容易引起性能问题(因为这里依赖的是Qt的信号与槽机制)
-    // TODO: 在此处使用工厂模式，根据type内容快速创建对应的对象
+    // TODO: 考虑在此处使用工厂模式，根据type内容快速创建对应的对象
     if (type == "audio_data") {
         emit audioPacketReceived(AudioDataTransferObject::fromJson(data));      // 构造并发送音频对象
     }
     else if (type == "auto_agent") {
         emit autoAgentPacketReceived(AutoAgentDataObject::fromJson(data));
+    }
+    else if (type == "screenshot_req") {
+        emit screenShotPacketReceived(ScreenShotDataTransferObject::fromJson(data));
     }
     else {
         qWarning() << "[NetworkDO] Received unknown type:" << type;

@@ -13,7 +13,7 @@ class AudioDataHandle final : public QObject
 {
 Q_OBJECT
 Q_DISABLE_COPY(AudioDataHandle)     // 禁用拷贝
-    private:
+private:
     /**
      * 构造函数私有化
      * @param parent

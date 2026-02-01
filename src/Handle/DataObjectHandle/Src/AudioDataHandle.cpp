@@ -42,15 +42,15 @@ AudioDataHandle::~AudioDataHandle()
 
 void AudioDataHandle::onAudioPacketReceived(const AudioDataTransferObject &packet) {
     // 管理并调用AudioOutput播放流式wav音频
-    if (packet.isEnd()) {   // 如果是结束包
+    if (packet.isEnd()) {   // 如果是结束包(空包)
         AudioOutput::getInstance()->stopStream();   // 停止播放
         return;
     }
-    if (packet.isStart()) { // 如果是开始包
+    if (packet.isStart()) { // 如果是开始包(单wav 44字节头)
         AudioOutput::getInstance()->startStream(packet.sampleRate(), packet.channelCount(), packet.bitDepth());;  // 播放开始
         return;
     }
-    // 否则播放即可
+    // 否则加入播放队列即可
     AudioOutput::getInstance()->pushStreamData(packet.audioData());
 }
 

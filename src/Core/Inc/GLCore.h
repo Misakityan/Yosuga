@@ -3,6 +3,9 @@
 #include <QtWidgets/QWidget>
 #include <QOpenGLWidget>
 #include "menu.h"
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 class GLCore final : public QOpenGLWidget
 {
@@ -81,7 +84,6 @@ private:
     bool isRightPressed;            /// 鼠标右键是否按下
     QPoint currentPos;              /// 当前鼠标位置
 #ifdef Q_OS_WIN
-#include <windows.h>
 private:
     HWND hwnd;  // Windows窗口句柄
     void setWindowTransparentForMouse(bool transparent);
