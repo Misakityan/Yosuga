@@ -42,6 +42,7 @@ ScreenShotReqDataHandle::ScreenShotReqDataHandle(QObject *parent) : QObject(pare
     const QString sysText = QString("System: %1  OS Version: %2  Display Server: %3")
                           .arg(sysInfo.osType, sysInfo.osVersion, sysInfo.displayServer);
     this->m_systemInfo = sysText;
+    qDebug() << "当前平台信息为: " << sysText;
 }
 
 ScreenShotReqDataHandle::~ScreenShotReqDataHandle()
@@ -55,12 +56,14 @@ void ScreenShotReqDataHandle::onScreenShotPacketReceived(const ScreenShotDataTra
     const ScreenHelper::ScreenshotResult result = ScreenHelper::captureFocusedScreen();   // 获取当前屏幕截图
     if (!result.success) {  // 如果截图失败
         // TODO: 考虑失败时候构造一个错误DTO给服务端
+        qDebug() << "截图失败: " << result.errorMsg;
         return;
     }
     ScreenShotDataTransferObject reback;    // 构造返回的DTO
     reback.setData("isSuccess", true).setData("RealTimeScreenShot", result.base64Data)
         .setData("Width", result.width).setData("Height", result.height)
-        .setData("DescribeInfo", this->m_systemInfo);
+        .setData("DescribeInfo", this->m_systemInfo).setData("LLMResponse", packet.LLMResponse());
     // 发送DTO
     NetworkDO::getInstance()->sendPacket(reback);
+    qDebug() << "ScreenShot packet sent to:" << packet.owner();
 }

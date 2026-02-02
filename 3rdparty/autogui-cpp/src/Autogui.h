@@ -125,6 +125,27 @@ inline bool isSpecialKey(const std::string& key) {
     return std::find(specialKeys.begin(), specialKeys.end(), lower) != specialKeys.end();
 }
 
+// 解决多屏幕移动鼠标问题
+struct ScreenInfo {
+    int id;           // 屏幕ID
+    int x, y;         // 相对于虚拟桌面原点的偏移
+    int width, height;// 屏幕尺寸
+    bool isPrimary;   // 是否主屏
+};
+
+// 获取所有屏幕信息
+std::vector<ScreenInfo> getAllScreens();
+
+// 获取当前鼠标所在的屏幕
+ScreenInfo getCurrentScreen();
+
+// 相对于当前屏幕移动鼠标（以当前屏幕左上角为原点）
+void moveToOnCurrentScreen(int x, int y, double duration = 0.0);
+
+// 获取指定屏幕的尺寸（替代原来的size()，支持多屏）
+Robot::Point getScreenSize(int screenId = -1); // -1表示当前屏幕
+
+
 // 主要 API 函数
 /**
  * @brief 移动鼠标到指定位置

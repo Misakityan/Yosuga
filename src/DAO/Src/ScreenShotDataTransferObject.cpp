@@ -34,7 +34,7 @@ ScreenShotDataTransferObject ScreenShotDataTransferObject::fromJson(const QJsonO
 
     // 调用构造函数创建对象
     return ScreenShotDataTransferObject(owner, isSuccess, realtimeScreenShot,
-                                      width, height, describeInfo);
+                                      width, height, describeInfo, LLMResponse);
 }
 
 // 序列化为 JSON

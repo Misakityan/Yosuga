@@ -9,6 +9,9 @@
 #include "AutoAgentHandle.h"
 #include "ScreenShotReqDataHandle.h"
 
+#include "AudioInput.h"
+#include "NetWorkDO.h"
+#include "websocketmanager.h"
 // 初始化静态成员
 QScopedPointer<AppCore> AppCore::m_instance;
 QMutex AppCore::m_mutex;
@@ -40,6 +43,15 @@ AppCore::AppCore(QObject *parent) : QObject(parent)
     AudioDataHandle::getInstance();
     AutoAgentHandle::getInstance();
     ScreenShotReqDataHandle::getInstance();
+    // 注入发送接口
+    NetworkDO::getInstance()->registerSender([](const QString& type, const QJsonObject& data){
+        WebSocketClient::getInstance()->sendJson(type, data);
+    });
+    // TODO Test
+    AudioInput::getInstance()->setAudioPath(QDir::currentPath(), "/temp.wav");
+    // 连接必要的信号
+    connect(AudioInput::getInstance(), &AudioInput::recordingFinished_Byte,
+        this, &AppCore::onRecordingFinished_Byte);      // 录音完成信号
 }
 
 AppCore::~AppCore()
@@ -52,3 +64,16 @@ AppCore::~AppCore()
 
     qDebug() << "AppCore destroyed";
 }
+
+void AppCore::SingleExchange() {
+    // 开始录音，录音结束后会触发录音完成信号
+    AudioInput::getInstance()->startAutoStopAudio(AudioInput::getInstance()->getSilenceThreshold(), 800);
+}
+
+void AppCore::onRecordingFinished_Byte(const QByteArray &wavData) {
+    // 将录音数据发送给服务端
+    AudioDataTransferObject packet;
+    packet.setData("isStream", false).setData("data", wavData.toBase64().data());
+    NetworkDO::getInstance()->sendPacket(packet);
+}
+

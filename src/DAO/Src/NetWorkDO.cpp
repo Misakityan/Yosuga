@@ -72,7 +72,7 @@ void NetworkDO::onDataReceived(const QString& type, const QJsonObject& data)
     else if (type == "auto_agent") {
         emit autoAgentPacketReceived(AutoAgentDataObject::fromJson(data));
     }
-    else if (type == "screenshot_req") {
+    else if (type == "screenshot_data") {
         emit screenShotPacketReceived(ScreenShotDataTransferObject::fromJson(data));
     }
     else {

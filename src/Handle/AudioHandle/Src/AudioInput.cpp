@@ -148,7 +148,7 @@ void AudioInput::onReadyRead()
     const qreal currentRms = calculateRMS(data);
     m_rmsValue = currentRms;
     // 计算平滑RMS (用于防止低频杂波突然打断静音检测)
-    constexpr qreal alpha = 0.3;    // 70% 历史权重, 30% 当前权重
+    constexpr qreal alpha = 0.15;    // 85% 历史权重, 15% 当前权重
     if (qFuzzyIsNull(m_smoothRms)) {
         // 如果是第一帧数据，直接赋值，避免从0开始慢慢爬升
         m_smoothRms = currentRms;
@@ -163,13 +163,30 @@ void AudioInput::onReadyRead()
         qDebug() << "Raw:" << currentRms << " Smooth:" << m_smoothRms;
 
         if (m_smoothRms < m_silenceThreshold) {
-            // 静音状态
-            if (!m_silenceTimer->isActive()) {
-                m_silenceTimer->start(m_silenceDuration);
+            // [当前是静音]
+
+            // 如果之前已经检测到过人声（说明是话说完了，或者是句间停顿）
+            if (m_hasVoiceDetected) {
+                // 启动/保持“短时”静音检测 (由 AppCore 传入，例如 500ms 或 1500ms)
+                if (!m_silenceTimer->isActive()) {
+                    m_silenceTimer->start(m_silenceDuration);
+                }
+                // 如果 Timer 正在运行，就让它继续倒计时，超时会自动触发 stopAudio
+            }
+            else {
+                // [还没有检测到过人声] (起始静音)
+                // 这里不需要做额外操作，startAutoStopAudio 里设置的 5000ms 长定时器在跑
+                // 允许用户深呼吸或准备
             }
         } else {
-            // 有声音，重置定时器
+            // [当前有声音]
+            m_hasVoiceDetected = true; // 标记：已经有人说话了
+
+            // 重置静音定时器
+            // 只要有人说话，就不断重置定时器，防止断录
             m_silenceTimer->stop();
+            // 这里可以预设启动，也可以不启动，只要有声音就会一直 stop
+            // 为了安全，设为 silenceDuration
             m_silenceTimer->start(m_silenceDuration);
         }
     }
@@ -246,11 +263,20 @@ void AudioInput::startAutoStopAudio(const qreal silenceThreshold, const int sile
     m_silenceThreshold = silenceThreshold;
     m_silenceDuration = silenceDuration;
 
+    // 重置状态
+    m_hasVoiceDetected = false;
+    m_smoothRms = 0.0;
     startAudio();
 
+    // 延迟200ms是为了避开硬件启动时的爆音，但不需要立即启动短时倒计时
     // 延迟启动静音检测，给一点缓冲时间
     QTimer::singleShot(200, this, [this](){
-        m_silenceTimer->start(m_silenceDuration);
+        if(isAutoRecording) { // 确保还在录音状态
+             // 如果还没检测到声音，给5秒的等待时间；如果检测到了，逻辑由onReadyRead接管
+             if(!m_hasVoiceDetected) {
+                 m_silenceTimer->start(5000); // 5秒没声音就停止
+             }
+        }
     });
 }
 
@@ -285,8 +311,12 @@ void AudioInput::thresholdTimeout()
     // 防止浮点误差导致负数
     if (variance < 0) variance = 0;
     const double stdDev = std::sqrt(variance);
+
+    // 增加一个固定的偏移量 offset
+    // 确保即使环境有轻微波动，也不会触发录音
+    constexpr double offset = 80.0;
     // 阈值 = 均值 + 2 * 标准差
-    const double bestThreshold = mean + 3 * stdDev;
+    const double bestThreshold = mean + (3 * stdDev) + offset;
     m_silenceThreshold = std::max(bestThreshold, 150.0);
     m_silenceThreshold = std::min(m_silenceThreshold, 30000.0);
     qDebug() << "Auto Threshold Calc -> Mean:" << mean

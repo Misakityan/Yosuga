@@ -29,15 +29,14 @@ if(APPLE)
     find_library(APPLICATIONSERVICES_LIBRARY ApplicationServices REQUIRED)
     target_link_libraries(autogui-cpp PUBLIC ${APPLICATIONSERVICES_LIBRARY})
 
-# Windows平台
+    # Windows平台
 elseif(WIN32)
     # 链接User32.lib (提供SendInput, GetCursorPos等API)
     target_link_libraries(autogui-cpp PUBLIC User32)
 
-# Linux/Unix平台
+    # Linux/Unix平台
 elseif(UNIX AND NOT APPLE)
     # Linux需要X11后端(Wayland尚未支持)
-    # Linux需要X11后端
     find_package(X11 REQUIRED)
     # 查找Xtst库（XTest扩展）
     find_library(X11_Xtst_LIB Xtst)
@@ -49,15 +48,20 @@ elseif(UNIX AND NOT APPLE)
     if(NOT X11_Xext_LIB)
         message(FATAL_ERROR "Xext library not found.")
     endif()
+    # 查找XRandR库（Xrandr扩展）
+    find_library(X11_Xrandr_LIB Xrandr)
+    if(NOT X11_Xrandr_LIB)
+        message(FATAL_ERROR "XRandR library not found. Install libxrandr-dev.")
+    endif()
     # 链接所有必需的X11库
     target_link_libraries(autogui-cpp PUBLIC
             ${X11_LIBRARIES}
             ${X11_Xtst_LIB}
             ${X11_Xext_LIB}
+            ${X11_Xrandr_LIB}
     )
     target_include_directories(autogui-cpp PUBLIC ${X11_INCLUDE_DIR})
 endif()
-
 # 集成方式: add_subdirectory
 # 在你的项目CMakeLists.txt中:
 #   add_subdirectory(autogui-cpp)

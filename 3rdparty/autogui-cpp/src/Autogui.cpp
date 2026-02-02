@@ -10,11 +10,10 @@
 #include <iostream>
 #include <random>
 #include <thread>
-
+#include <cstring>
 #ifndef M_PI
 # define M_PI		3.14159265358979323846
 #endif
-
 namespace AutoGUI {
 
 // 内部辅助函数
@@ -32,6 +31,139 @@ int secondsToMs(double seconds) { return static_cast<int>(seconds * 1000); }
 Robot::Point getCurrentPosition() { return Robot::Mouse::GetPosition(); }
 
 } // namespace
+
+#if defined(__linux__)
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
+#include <algorithm>
+
+// 获取所有屏幕信息
+std::vector<ScreenInfo> getAllScreens() {
+    std::vector<ScreenInfo> screens;
+    Display* display = XOpenDisplay(nullptr);
+    if (!display) return screens;
+
+    XRRScreenResources* resources = XRRGetScreenResources(display, DefaultRootWindow(display));
+    if (resources) {
+        for (int i = 0; i < resources->noutput; i++) {
+            XRROutputInfo* output = XRRGetOutputInfo(display, resources, resources->outputs[i]);
+            if (output && output->connection == RR_Connected && output->crtc) {
+                XRRCrtcInfo* crtc = XRRGetCrtcInfo(display, resources, output->crtc);
+                if (crtc) {
+                    ScreenInfo info;
+                    info.id = i;
+                    info.x = crtc->x;
+                    info.y = crtc->y;
+                    info.width = crtc->width;
+                    info.height = crtc->height;
+                    info.isPrimary = (output->name && strcmp(output->name, "primary") == 0);
+                    // 或者使用 XRRGetOutputPrimary 来判断
+                    screens.push_back(info);
+                    XRRFreeCrtcInfo(crtc);
+                }
+                XRRFreeOutputInfo(output);
+            }
+        }
+        XRRFreeScreenResources(resources);
+    }
+    XCloseDisplay(display);
+    return screens;
+}
+
+// 获取当前鼠标所在的屏幕
+ScreenInfo getCurrentScreen() {
+    auto screens = getAllScreens();
+    if (screens.empty()) return {0, 0, 0, 1920, 1080, true};
+
+    // 获取当前鼠标位置（虚拟桌面绝对坐标）
+    Robot::Point mouse = position();
+
+    // 找到包含该点的屏幕
+    for (const auto& screen : screens) {
+        if (mouse.x >= screen.x && mouse.x < screen.x + screen.width &&
+            mouse.y >= screen.y && mouse.y < screen.y + screen.height) {
+            return screen;
+        }
+    }
+
+    // 默认返回主屏或第一个屏幕
+    auto it = std::find_if(screens.begin(), screens.end(),
+                          [](const ScreenInfo& s) { return s.isPrimary; });
+    return (it != screens.end()) ? *it : screens[0];
+}
+
+// 相对于当前屏幕移动
+void moveToOnCurrentScreen(int x, int y, double duration) {
+    const ScreenInfo current = getCurrentScreen();
+    // 转换为虚拟桌面绝对坐标
+    int absX = current.x + x;
+    int absY = current.y + y;
+    moveTo(absX, absY, duration);
+}
+
+// 获取当前屏幕尺寸
+Robot::Point getScreenSize(int screenId) {
+    if (screenId == -1) {
+        ScreenInfo current = getCurrentScreen();
+        return {current.width, current.height};
+    }
+    auto screens = getAllScreens();
+    for (const auto& s : screens) {
+        if (s.id == screenId) return {s.width, s.height};
+    }
+    return {1920, 1080};
+}
+
+#endif
+#if defined(_WIN32)
+#include <Windows.h>
+
+  std::vector<ScreenInfo> getAllScreens() {
+  std::vector<ScreenInfo> screens;
+  EnumDisplayMonitors(nullptr, nullptr,
+      [](HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL {
+          auto* screens = reinterpret_cast<std::vector<ScreenInfo>*>(dwData);
+          MONITORINFOEX info;
+          info.cbSize = sizeof(info);
+          if (GetMonitorInfo(hMonitor, &info)) {
+              ScreenInfo si;
+              si.id = screens->size();
+              si.x = info.rcMonitor.left;
+              si.y = info.rcMonitor.top;
+              si.width = info.rcMonitor.right - info.rcMonitor.left;
+              si.height = info.rcMonitor.bottom - info.rcMonitor.top;
+              si.isPrimary = (info.dwFlags & MONITORINFOF_PRIMARY) != 0;
+              screens->push_back(si);
+          }
+          return TRUE;
+      }, reinterpret_cast<LPARAM>(&screens));
+  return screens;
+}
+
+ScreenInfo getCurrentScreen() {
+  // 获取当前鼠标位置
+  POINT pt;
+  GetCursorPos(&pt);
+  // 查找包含该点的显示器
+  HMONITOR hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+  MONITORINFOEX info;
+  info.cbSize = sizeof(info);
+  GetMonitorInfo(hMonitor, &info);
+
+  ScreenInfo si;
+  si.x = info.rcMonitor.left;
+  si.y = info.rcMonitor.top;
+  si.width = info.rcMonitor.right - info.rcMonitor.left;
+  si.height = info.rcMonitor.bottom - info.rcMonitor.top;
+  return si;
+}
+
+void moveToOnCurrentScreen(int x, int y, double duration) {
+  ScreenInfo current = getCurrentScreen();
+  moveTo(current.x + x, current.y + y, duration);
+}
+#endif
+
 
 // 实现主要API函数
 void moveTo(int x, int y, double duration) {
@@ -269,37 +401,84 @@ void sleep(double seconds) {
   }
 }
 
+#if defined(_WIN32)
+#include <Windows.h>
+
+#elif defined(__APPLE__)
+#include <CoreGraphics/CoreGraphics.h>
+
+#elif defined(__linux__)
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
+#endif
+
 // 平台特定函数实现
 Robot::Point size() {
   // 平台特定实现
 #ifdef _WIN32
 // Windows实现
-#include <Windows.h>
   int width = GetSystemMetrics(SM_CXSCREEN);
   int height = GetSystemMetrics(SM_CYSCREEN);
   return {width, height};
 
 #elif defined(__APPLE__)
 // macOS实现
-#include <CoreGraphics/CoreGraphics.h>
   CGRect mainDisplayBounds = CGDisplayBounds(CGMainDisplayID());
   int width = static_cast<int>(CGRectGetWidth(mainDisplayBounds));
   int height = static_cast<int>(CGRectGetHeight(mainDisplayBounds));
   return {width, height};
 
 #elif defined(__linux__)
-// Linux实现（X11）
-#include <X11/Xlib.h>
-
   Display *display = XOpenDisplay(nullptr);
-  if (display) {
-    const Screen *screen = DefaultScreenOfDisplay(display);
-    const int width = WidthOfScreen(screen);
-    const int height = HeightOfScreen(screen);
-    XCloseDisplay(display);
-    return {width, height};
+  if (!display) return {1920, 1080};
+
+  int width = 0, height = 0;
+
+  // 使用 XRRGetScreenResources (兼容 XRandR 1.2+，比 Current 版本兼容性更好)
+  XRRScreenResources *resources = XRRGetScreenResources(display, DefaultRootWindow(display));
+  if (resources) {
+    RROutput target_output = None;
+
+    // 条件编译：只在 XRandR 1.3+ 时使用 Primary Output 功能
+#if defined(RANDR_MAJOR) && defined(RANDR_MINOR)
+#if RANDR_MAJOR > 1 || (RANDR_MAJOR == 1 && RANDR_MINOR >= 3)
+    target_output = XRRGetOutputPrimary(display, DefaultRootWindow(display));
+#endif
+#endif
+
+    // 如果没有获取到主显示器（或版本太低），使用第一个已连接的显示器
+    if (target_output == None) {
+      for (int i = 0; i < resources->noutput; i++) {
+        XRROutputInfo *info = XRRGetOutputInfo(display, resources, resources->outputs[i]);
+        if (info) {
+          if (info->connection == 0) {
+            target_output = resources->outputs[i];
+            XRRFreeOutputInfo(info);
+            break;
+          }
+          XRRFreeOutputInfo(info);
+        }
+      }
+    }
+
+    // 获取选中显示器的分辨率
+    if (target_output != None) {
+      XRROutputInfo *output_info = XRRGetOutputInfo(display, resources, target_output);
+      if (output_info && output_info->crtc) {
+        XRRCrtcInfo *crtc_info = XRRGetCrtcInfo(display, resources, output_info->crtc);
+        if (crtc_info) {
+          width = static_cast<int>(crtc_info->width);
+          height = static_cast<int>(crtc_info->height);
+          XRRFreeCrtcInfo(crtc_info);
+        }
+        XRRFreeOutputInfo(output_info);
+      }
+    }
+    XRRFreeScreenResources(resources);
   }
-  return {1920, 1080}; // 默认值
+
+  XCloseDisplay(display);
+  return (width > 0 && height > 0) ? Robot::Point{width, height} : Robot::Point{1920, 1080};
 
 #else
   // 其他平台

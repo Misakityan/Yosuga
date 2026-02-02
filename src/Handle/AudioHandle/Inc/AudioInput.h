@@ -148,5 +148,7 @@ private:
     qreal m_silenceThreshold = 1200;        /// 静音阈值
     int m_silenceDuration = 1500;           /// 静音持续时间
     qreal m_smoothRms = 0.0;                /// 平滑RMS值(用于防止低频杂波突然打断静音检测)
+
+    bool m_hasVoiceDetected = false;        /// 是否已检测到人声
 };
 

@@ -5,29 +5,29 @@
 #include <QTimer>
 
 #include "TextRenderer.h"
-// #include "AudioInput.h"
-// #include "AudioOutput.h"
+#include "AppCore.h"
 
 Menu::Menu(QWidget *parent)
         : ElaMenu(parent)
 {
     // 设置默认主题
     eTheme->setThemeMode(ElaThemeType::Dark);
-
     createMenu();
 }
 
-Menu::~Menu()
-{
-
+Menu::~Menu() {
+    AppCore::destroy();     // 显式销毁 AppCore
 }
 
 void Menu::createMenu()
 {
     toggleThe = addAction("切换主题");
 
+    // 单次对话功能按钮
+    startSingleExchangeAction = addAction("单次对话(测试)");
+
     // 连续对话功能按钮
-    startExchangeAction = addAction("连续对话(测试)");
+    startContinueExchangeAction = addAction("连续对话(测试)");
 
     // 添加设置按钮
     settingsAction = addAction("设置");
@@ -42,10 +42,14 @@ void Menu::createMenu()
         toggleTheme();
     });
 
-    // TODO 连续对话功能,需要优化实现
-    connect(startExchangeAction, &QAction::triggered, this, [this]() {
-        // startExchange();
-            qDebug() << "Start Exchange triggered";
+    // 单次对话功能
+    connect(startSingleExchangeAction, &QAction::triggered, this, []() {
+        qDebug() << "Start SingleExchange triggered";
+        AppCore::getInstance()->SingleExchange();
+    });
+    // 连续对话功能 TODO: 待开发
+    connect(startContinueExchangeAction, &QAction::triggered, this, []() {
+        qDebug() << "Start ContinueExchange triggered";
     });
 
 

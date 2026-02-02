@@ -27,7 +27,7 @@ private:
     static QMutex m_mutex;
 private slots:
     // 业务接收槽函数
-
+    void onRecordingFinished_Byte(const QByteArray &wavData);
 public:
     // 单例访问点
     static AppCore *getInstance();
@@ -36,4 +36,7 @@ public:
 
     ~AppCore() override;
 
+public:
+    // 单次对话
+    void SingleExchange();
 };

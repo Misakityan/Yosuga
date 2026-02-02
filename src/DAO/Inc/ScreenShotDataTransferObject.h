@@ -28,7 +28,7 @@ public:
     // 静态工厂方法
     static ScreenShotDataTransferObject fromJson(const QJsonObject& json);
 
-    [[nodiscard]] QString type() const override { return "screenshot_req"; }
+    [[nodiscard]] QString type() const override { return "screenshot_data"; }
 
     // 序列化
     [[nodiscard]] QJsonObject toJson() const override;    // 通过多态即可统一调用方式
