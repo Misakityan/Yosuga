@@ -29,15 +29,16 @@
 #include "AudioDataTransferObject.h"
 #include "AutoAgentDataObject.h"
 #include "ScreenShotDataTransferObject.h"
+#include "DeviceDataTransferObject.h"
 /**
  * NetworkDO
  */
 class NetworkDO final : public QObject
 {
-Q_OBJECT
-Q_DISABLE_COPY(NetworkDO) // 禁用拷贝
+    Q_OBJECT
+    Q_DISABLE_COPY(NetworkDO) // 禁用拷贝
 
-public:
+    public:
     // 单例访问点
     static NetworkDO* getInstance();
     // 显式销毁
@@ -53,11 +54,12 @@ public:
     // 业务发送函数
     void sendPacket(const DataTransferObjectBase& packet);
 
-signals:
-    // 业务接收信号
-    void audioPacketReceived(const AudioDataTransferObject& packet);            // 音频数据准备完成信号
+    signals:
+        // 业务接收信号
+        void audioPacketReceived(const AudioDataTransferObject& packet);            // 音频数据准备完成信号
     void autoAgentPacketReceived(const AutoAgentDataObject& packet);            // 自动代理数据包接收信号
     void screenShotPacketReceived(const ScreenShotDataTransferObject& packet);  // 截图数据包接收信号
+    void deviceCommandReceived(const DeviceDataTransferObject& packet);         // 设备控制命令（服务端→客户端）
 
     void errorOccurred(const QString& errorMsg);                        // 错误信号
 

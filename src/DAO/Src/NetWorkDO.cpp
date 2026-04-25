@@ -75,6 +75,9 @@ void NetworkDO::onDataReceived(const QString& type, const QJsonObject& data)
     else if (type == "screenshot_data") {
         emit screenShotPacketReceived(ScreenShotDataTransferObject::fromJson(data));
     }
+    else if (type == "device_command") {
+        emit deviceCommandReceived(DeviceDataTransferObject::fromJson(data));
+    }
     else {
         qWarning() << "[NetworkDO] Received unknown type:" << type;
     }

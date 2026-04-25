@@ -131,7 +131,7 @@ ModelPage::ModelPage(QWidget *parent)
                 return nullptr;
             }
             // 执行真正的耗时加载
-            // 调用我们在 Manager 里新写的函数
+            // 调用在 Manager 里新写的函数
             LAppModel *model = LAppLive2DManager::GetInstance()->LoadModelInstance(dir, filename);
             // 清理子线程资源
             context->doneCurrent();

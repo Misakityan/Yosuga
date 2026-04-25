@@ -8,10 +8,13 @@
 #include "AudioDataHandle.h"
 #include "AutoAgentHandle.h"
 #include "ScreenShotReqDataHandle.h"
+#include "DeviceDataHandle.h"
 
 #include "AudioInput.h"
 #include "NetWorkDO.h"
 #include "websocketmanager.h"
+#include "DeviceTcpServer.h"
+#include "DeviceWebSocketServer.h"
 // 初始化静态成员
 QScopedPointer<AppCore> AppCore::m_instance;
 QMutex AppCore::m_mutex;
@@ -39,6 +42,32 @@ void AppCore::destroy()
 
 AppCore::AppCore(QObject *parent) : QObject(parent)
 {
+    DeviceDataHandle *deviceHandle = DeviceDataHandle::getInstance();
+
+    // 启动嵌入式设备 TCP 服务器
+    m_deviceTcpServer = new DeviceTcpServer(10001, this);
+    connect(m_deviceTcpServer, &DeviceTcpServer::deviceConnected,
+            deviceHandle, [=](const QString &deviceId, const QString &) {
+                deviceHandle->registerDevice(deviceId, "tcp", m_deviceTcpServer);
+            });
+    connect(m_deviceTcpServer, &DeviceTcpServer::deviceDisconnected,
+            deviceHandle, &DeviceDataHandle::unregisterDevice);
+    connect(m_deviceTcpServer, &DeviceTcpServer::jsonReceived,
+            deviceHandle, &DeviceDataHandle::onTcpDeviceData);
+    m_deviceTcpServer->start();
+
+    // 启动嵌入式设备 WebSocket 服务器
+    m_deviceWsServer = new DeviceWebSocketServer(10002, this);
+    connect(m_deviceWsServer, &DeviceWebSocketServer::deviceConnected,
+            deviceHandle, [=](const QString &deviceId, const QString &) {
+                deviceHandle->registerDevice(deviceId, "websocket", m_deviceWsServer);
+            });
+    connect(m_deviceWsServer, &DeviceWebSocketServer::deviceDisconnected,
+            deviceHandle, &DeviceDataHandle::unregisterDevice);
+    connect(m_deviceWsServer, &DeviceWebSocketServer::jsonReceived,
+            deviceHandle, &DeviceDataHandle::onWsDeviceData);
+    m_deviceWsServer->start();
+
     // 初始化业务解析单例
     AudioDataHandle::getInstance();
     AutoAgentHandle::getInstance();
@@ -51,18 +80,30 @@ AppCore::AppCore(QObject *parent) : QObject(parent)
     AudioInput::getInstance()->setAudioPath(QDir::currentPath(), "/temp.wav");
     // 连接必要的信号
     connect(AudioInput::getInstance(), &AudioInput::recordingFinished_Byte,
-        this, &AppCore::onRecordingFinished_Byte);      // 录音完成信号
+        this, &AppCore::onRecordingFinished_Byte);
 }
 
 AppCore::~AppCore()
 {
-    // 析构业务解析单例
-    ScreenShotReqDataHandle::destroy();
-    AutoAgentHandle::destroy();     // 显式销毁
-    AudioDataHandle::destroy();
+    if (m_deviceTcpServer) m_deviceTcpServer->stop();
+    if (m_deviceWsServer) m_deviceWsServer->stop();
 
+    ScreenShotReqDataHandle::destroy();
+    AutoAgentHandle::destroy();
+    AudioDataHandle::destroy();
+    DeviceDataHandle::destroy();
 
     qDebug() << "AppCore destroyed";
+}
+
+void AppCore::registerEmbeddedDevice(const QString &deviceId, SerialPortClient *client)
+{
+    DeviceDataHandle::getInstance()->registerDevice(deviceId, QStringLiteral("serial"), client);
+}
+
+void AppCore::unregisterEmbeddedDevice(const QString &deviceId)
+{
+    DeviceDataHandle::getInstance()->unregisterDevice(deviceId);
 }
 
 void AppCore::SingleExchange() {

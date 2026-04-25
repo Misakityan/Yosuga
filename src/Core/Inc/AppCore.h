@@ -11,32 +11,38 @@
  */
 #include <QMutex>
 #include <QObject>
+#include <QHash>
+#include "serialportmanager.h"
+
+class DeviceTcpServer;
+class DeviceWebSocketServer;
 
 class AppCore final : public QObject {
-Q_OBJECT
-Q_DISABLE_COPY(AppCore)     // 禁用拷贝
+    Q_OBJECT
+    Q_DISABLE_COPY(AppCore)
 
-private:
-    /**
-     * 构造函数私有化
-     * @param parent
-     */
-    explicit AppCore(QObject *parent = nullptr);        // 并不将本模块挂在对象树当中，因为本模块为单例类，内存自行管理
+    private:
+    explicit AppCore(QObject *parent = nullptr);
 
-    static QScopedPointer<AppCore> m_instance;          // 单例类
+    static QScopedPointer<AppCore> m_instance;
     static QMutex m_mutex;
+
+    DeviceTcpServer *m_deviceTcpServer = nullptr;
+    DeviceWebSocketServer *m_deviceWsServer = nullptr;
+
 private slots:
-    // 业务接收槽函数
     void onRecordingFinished_Byte(const QByteArray &wavData);
+
 public:
-    // 单例访问点
     static AppCore *getInstance();
-    // 显式销毁
     static void destroy();
 
     ~AppCore() override;
 
+    void registerEmbeddedDevice(const QString &deviceId, SerialPortClient *client);
+    void unregisterEmbeddedDevice(const QString &deviceId);
+
 public:
-    // 单次对话
     void SingleExchange();
+    void tryToInit() { return; };
 };

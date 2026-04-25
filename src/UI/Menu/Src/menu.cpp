@@ -56,6 +56,7 @@ void Menu::createMenu()
     // 设置按钮
     connect(settingsAction, &QAction::triggered, this, [this]() {
         qDebug() << "Settings triggered";
+        AppCore::getInstance()->tryToInit();
         // 打开设置窗口
 
         // 如果 Setting 窗口已经存在，则不再创建

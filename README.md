@@ -19,7 +19,7 @@
 
 _**本项目为Yosuga.**_
 
-本项目使用CMake构建，基于C++Qt6.6.3以及Live2D官方SDK(CubismSdkForNative-5-r.4.1)实现Live2D桌面宠物
+本项目使用CMake构建，基于C++Qt6.6.3以及Live2D官方SDK(CubismSdkForNative-5-r.4.1)实现Live2D桌面助手
 (本项目由[Yosuga-qt5](https://github.com/Misakityan/Yosuga-qt5) 发展更新而来，项目架构与代码都有所不同，最显著的特点是本项目支持多平台)
 
 环境为:
