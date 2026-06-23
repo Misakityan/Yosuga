@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_PREFIX_PATH "/home/misaki/Qt6.3/6.6.3/gcc_64")    # 设置Qt6安装路径(此处请根据你的Qt6安装位置填写)
+set(CMAKE_PREFIX_PATH "/home/misaki/Qt/6.6.3/gcc_64")    # 设置Qt6安装路径(此处请根据你的Qt6安装位置填写)
 
 # 设置是否为debug模式 默认为Debug
 if(NOT CMAKE_BUILD_TYPE)
@@ -182,6 +182,16 @@ target_link_libraries(${PROJECT_NAME}
         Qt::OpenGLWidgets
         Qt::Concurrent
 )
+
+# 全局热键 (PTT) 所需平台库
+if(APPLE)
+    find_library(COREGRAPHICS_LIB CoreGraphics REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${COREGRAPHICS_LIB})
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(X11 REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE X11::X11)
+endif()
 
 # 添加头文件
 target_include_directories(${PROJECT_NAME}
