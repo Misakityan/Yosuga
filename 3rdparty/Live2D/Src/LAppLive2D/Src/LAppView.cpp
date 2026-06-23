@@ -60,8 +60,8 @@ void LAppView::Initialize()
 {
     int width, height;
     //glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &width, &height);
-    width = LAppDelegate::GetInstance()->GetWindow()->width();
-    height = LAppDelegate::GetInstance()->GetWindow()->height();
+    width = LAppDelegate::GetInstance()->GetWindowWidth();
+    height = LAppDelegate::GetInstance()->GetWindowHeight();
 
     if(width==0 || height==0)
     {
@@ -109,8 +109,8 @@ void LAppView::Render()
     // 画面サイズを取得する
     int maxWidth, maxHeight;
     //glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &maxWidth, &maxHeight);
-    maxWidth = LAppDelegate::GetInstance()->GetWindow()->width();
-    maxHeight = LAppDelegate::GetInstance()->GetWindow()->height();
+    maxWidth = LAppDelegate::GetInstance()->GetWindowWidth();
+    maxHeight = LAppDelegate::GetInstance()->GetWindowHeight();
 
     //_back->SetWindowSize(maxWidth, maxHeight);
     //_gear->SetWindowSize(maxWidth, maxHeight);
@@ -155,12 +155,13 @@ void LAppView::Render()
 
 void LAppView::InitializeSprite()
 {
-    _programId = LAppDelegate::GetInstance()->CreateShader();
+    // _programId = LAppDelegate::GetInstance()->CreateShader();
+    _programId = LAppDelegate::GetInstance()->GetRenderContext()->CreateShaderProgram();
 
     int width, height;
     //glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &width, &height);
-    width = LAppDelegate::GetInstance()->GetWindow()->width();
-    height = LAppDelegate::GetInstance()->GetWindow()->height();
+    width = LAppDelegate::GetInstance()->GetWindowWidth();
+    height = LAppDelegate::GetInstance()->GetWindowHeight();
 
     LAppTextureManager* textureManager = LAppDelegate::GetInstance()->GetTextureManager();
     const string resourcesPath = ResourcesPath;
@@ -196,6 +197,13 @@ void LAppView::InitializeSprite()
 //    x = width * 0.5f;
 //    y = height * 0.5f;
 //    _renderSprite = new LAppSprite(x, y, static_cast<float>(width), static_cast<float>(height), 0, _programId);
+// _programId 类型由GLuint改为uintptr_t，构造参数匹配
+// _renderSprite = new LAppSprite(x, y, static_cast<float>(width),
+// static_cast<float>(height), 0,
+// static_cast<GLuint>(_programId));
+    float x = width * 0.5f;
+    float y = height * 0.5f;
+    _renderSprite = new LAppSprite(x, y, static_cast<float>(width), static_cast<float>(height), 0, static_cast<uintptr_t>(_programId));
 }
 
 void LAppView::OnTouchesBegan(float px, float py) const
@@ -303,8 +311,8 @@ void LAppView::PreModelDraw(LAppModel& refModel)
         {// 描画ターゲット内部未作成の場合はここで作成
             int width, height;
             /*glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &width, &height);*/
-            width = LAppDelegate::GetInstance()->GetWindow()->width();
-            height = LAppDelegate::GetInstance()->GetWindow()->height();
+            width = LAppDelegate::GetInstance()->GetWindowWidth();
+            height = LAppDelegate::GetInstance()->GetWindowHeight();
 
             if (width != 0 && height != 0)
             {
@@ -350,8 +358,8 @@ void LAppView::PostModelDraw(LAppModel& refModel)
             int maxWidth, maxHeight;
             /*glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &maxWidth, &maxHeight);*/
 
-            maxWidth = LAppDelegate::GetInstance()->GetWindow()->width();   // Misaki 修改
-            maxHeight = LAppDelegate::GetInstance()->GetWindow()->height();
+            maxWidth = LAppDelegate::GetInstance()->GetWindowWidth();   // Misaki 修改
+            maxHeight = LAppDelegate::GetInstance()->GetWindowHeight();
 
             _renderSprite->SetWindowSize(maxWidth, maxHeight);
 
@@ -400,8 +408,8 @@ void LAppView::ResizeSprite()
     // 描画領域サイズ
     int width, height;
     //glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &width, &height);
-    width = LAppDelegate::GetInstance()->GetWindow()->width();
-    height = LAppDelegate::GetInstance()->GetWindow()->height();
+    width = LAppDelegate::GetInstance()->GetWindowWidth();
+    height = LAppDelegate::GetInstance()->GetWindowHeight();
 
     float x = 0.0f;
     float y = 0.0f;

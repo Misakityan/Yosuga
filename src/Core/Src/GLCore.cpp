@@ -14,8 +14,12 @@
 #include <algorithm>
 
 #include "TextRenderer.h"
-// #include "AudioOutput.h"
 #include "AppContext.h"
+#include "GLRenderContext.hpp"                     // 渲染后端抽象
+#ifdef EMBEDDED_LINUX
+#include "AppCore.h"
+#include <QIcon>
+#endif
 QMap<QString, double> GLCore::frameRateMap = {
     {"30", 30.0},
     {"60", 60.0},
@@ -49,7 +53,9 @@ GLCore::GLCore(const int width, const int height, QWidget *parent)
     QApplication::setFont(QFont("Microsoft YaHei", 13));
 
     // new一些必要的对象
+#if !defined(EMBEDDED_LINUX)
     contextMenu = new Menu(this);
+#endif
 
     // 设置窗口大小
     setFixedSize(width, height);
@@ -81,7 +87,38 @@ GLCore::GLCore(const int width, const int height, QWidget *parent)
     this->setMouseTracking(true);
 
     // 连接一些必要的信号与槽
+#ifndef EMBEDDED_LINUX      // 如果不是嵌入式Linux系统(注意如果你的嵌入式Linux平台启用了桌面系统，那么可能需要去掉这个条件宏)
     connect(contextMenu, &Menu::closeMainWindow, this, &GLCore::closeGL);   // 关闭窗口信号
+#endif
+
+#ifdef EMBEDDED_LINUX
+    AppCore::getInstance();
+
+    pttButton = new QPushButton(this);
+    pttButton->setFixedSize(64, 64);
+    pttButton->move(width - 80, height - 80);
+    pttButton->setIcon(QIcon("Resources/Pic/Others/voice.png"));
+    pttButton->setIconSize(QSize(56, 56));
+    pttButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: rgba(255, 255, 255, 60);"
+        "  border-radius: 32px;"
+        "  border: none;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: rgba(250, 80, 80, 150);"
+        "}"
+    );
+    pttButton->raise();
+    pttButton->show();
+
+    connect(pttButton, &QPushButton::pressed, this, []() {
+        AppCore::getInstance()->startPttRecording();
+    });
+    connect(pttButton, &QPushButton::released, this, []() {
+        AppCore::getInstance()->stopPttRecording();
+    });
+#endif
 
     // 注册当前实例到中介类
     AppContext::RegisterGLCore(this);
@@ -191,10 +228,12 @@ void GLCore::mouseMoveEvent(QMouseEvent* event)
     const float y = static_cast<float>(event->position().y());
     LAppDelegate::GetInstance()->GetView()->OnTouchesMoved(x, y);   // 将当前鼠标位置传递给LAppDelegate
 
+#if !defined(EMBEDDED_LINUX)
     if (isLeftPressed) {    // 鼠标左键按下
         const QPoint newPos = event->globalPos() - currentPos;
         this->move(newPos);
     }
+#endif
 }
 
 void GLCore::mousePressEvent(QMouseEvent* event)
@@ -249,7 +288,9 @@ void GLCore::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::RightButton) {
         // 在鼠标右键点击的位置创建菜单，显示自定义右键菜单
         if (onModel) {
+#if !defined(EMBEDDED_LINUX)
             contextMenu->showMenu(event->globalPos());
+#endif
             this->isRightPressed = true;
         }
         else {
@@ -297,7 +338,25 @@ void GLCore::mouseReleaseEvent(QMouseEvent* event)
 
 void GLCore::initializeGL()
 {
-    LAppDelegate::GetInstance()->Initialize(this);
+    // 注入渲染后端抽象层，由GLCore(OpenGL)创建GLRenderContext并交给LAppDelegate管理
+    if (!LAppDelegate::GetInstance()->GetRenderContext()) {
+        LAppDelegate::GetInstance()->SetRenderContext(new GLRenderContext());
+    }
+    // 初始化GLEW 必须在任何Live2D渲染操作之前调用
+    // Live2D预编译的libFramework.a使用GLEW函数指针（如glGenFramebuffers等），
+    // 未调用glewInit()会导致空指针解引用SIGSEGV
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK) {
+        qFatal("Failed to initialize GLEW");
+        return;
+    }
+
+    // 注册窗口大小变更回调 模型加载后通过此回调通知GLCore调整窗口
+    LAppDelegate::GetInstance()->SetWindowResizeCallback([this](int w, int h) {
+        setWindowSize(w, h);
+    });
+    // LAppDelegate::GetInstance()->Initialize(this);  // 原(QWidget*)
+    LAppDelegate::GetInstance()->Initialize(this->width(), this->height()); // 解耦
 }
 
 void GLCore::paintGL()

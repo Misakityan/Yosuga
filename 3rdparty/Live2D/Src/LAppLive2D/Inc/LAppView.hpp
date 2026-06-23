@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "LAppOpenGL.hpp"
 #include <Math/CubismMatrix44.hpp>
 #include <Math/CubismViewMatrix.hpp>
 #include "CubismFramework.hpp"
 #include <Rendering/OpenGL/CubismOffscreenSurface_OpenGLES2.hpp>
+#include "ISpriteRenderer.hpp"      // 绘制接口抽象
 
 class TouchManager;
 class LAppSprite;
@@ -158,14 +158,17 @@ private:
     TouchManager* _touchManager;                 ///< タッチマネージャー
     Csm::CubismMatrix44* _deviceToScreen;    ///< デバイスからスクリーンへの行列
     Csm::CubismViewMatrix* _viewMatrix;      ///< viewMatrix
-    GLuint _programId;                       ///< シェーダID
+    // GLuint _programId;                       ///< シェーダID
+    uintptr_t _programId;                       ///< 顶点着色器ID
     //LAppSprite* _back;                       ///< 背景画像
     //LAppSprite* _gear;                       ///< ギア画像
     //LAppSprite* _power;                      ///< 電源画像
 
     // レンダリング先を別ターゲットにする方式の場合に使用
-    LAppSprite* _renderSprite;                                      ///< モードによっては_renderBufferのテクスチャを描画
-    Csm::Rendering::CubismOffscreenSurface_OpenGLES2 _renderBuffer;   ///< モードによってはCubismモデル結果をこっちにレンダリング
+    // LAppSprite* _renderSprite;                                      ///< モードによっては_renderBufferのテクスチャを描画
+    ISpriteRenderer* _renderSprite;                                     ///< 绘制接口抽象
+    // Csm::Rendering::CubismOffscreenSurface_OpenGLES2 _renderBuffer;   ///< モードによってはCubismモデル結果をこっちにレンダリング
+    CUBISM_OFFSCREEN_TYPE _renderBuffer;
     SelectTarget _renderTarget;     ///< レンダリング先の選択肢
     float _clearColor[4];           ///< レンダリングターゲットのクリアカラー
 };

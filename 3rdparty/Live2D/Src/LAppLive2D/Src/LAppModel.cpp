@@ -789,7 +789,8 @@ void LAppModel::DoDraw()
         return;
     }
 
-    GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->DrawModel();
+    // GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->DrawModel();
+    GetRenderer<CUBISM_RENDERER_TYPE>()->DrawModel();       // 适配不同渲染器
 }
 
 void LAppModel::Draw(CubismMatrix44& matrix)
@@ -801,8 +802,10 @@ void LAppModel::Draw(CubismMatrix44& matrix)
 
     matrix.MultiplyByMatrix(_modelMatrix);
 
-    GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->SetMvpMatrix(&matrix);
-
+    // 設定MVP行列
+    // GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->SetMvpMatrix(&matrix);
+    GetRenderer<CUBISM_RENDERER_TYPE>()->SetMvpMatrix(&matrix);     // 适配不同渲染器
+    // 描画
     DoDraw();
 }
 
@@ -892,13 +895,16 @@ void LAppModel::SetupTextures()
         const csmInt32 glTextueNumber = texture->id;
 
         //OpenGL
-        GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->BindTexture(modelTextureNumber, glTextueNumber);
+        // GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->BindTexture(modelTextureNumber, glTextueNumber);
+        GetRenderer<CUBISM_RENDERER_TYPE>()->BindTexture(modelTextureNumber, glTextueNumber);       // 适配不同渲染器
     }
 
 #ifdef PREMULTIPLIED_ALPHA_ENABLE
-    GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->IsPremultipliedAlpha(true);
+    // GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->IsPremultipliedAlpha(true);
+    GetRenderer<CUBISM_RENDERER_TYPE>()->IsPremultipliedAlpha(true);
 #else
-    GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->IsPremultipliedAlpha(false);
+    // GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->IsPremultipliedAlpha(false);
+    GetRenderer<CUBISM_RENDERER_TYPE>()->IsPremultipliedAlpha(false);
 #endif
 
 }

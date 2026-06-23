@@ -6,7 +6,51 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_PREFIX_PATH "/home/misaki/Qt/6.6.3/gcc_64")    # 设置Qt6安装路径(此处请根据你的Qt6安装位置填写)
+# 平台与架构检测
+if(DEFINED TARGET_ARCH AND TARGET_ARCH STREQUAL "arm64")
+    set(PLAT "linux_arm")
+    set(ARCH "arm64")
+    set(CMAKE_PREFIX_PATH "/home/misaki/MisakiCodes/rk3566-sdk/3rd/Qt6.6.3")
+    add_definitions(-DCSM_TARGET_HARMONYOS_ES3)   # OpenGL ES 3.0 渲染宏
+    add_definitions(-DEMBEDDED_LINUX)               # 嵌入式Linux专用宏
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64|ARM64")
+    set(PLAT "linux_arm")
+    set(ARCH "arm64")
+    set(CMAKE_PREFIX_PATH "/home/misaki/MisakiCodes/rk3566-sdk/3rd/Qt6.6.3")
+    add_definitions(-DCSM_TARGET_HARMONYOS_ES3)
+    add_definitions(-DEMBEDDED_LINUX)
+elseif(WIN32)
+    set(PLAT "windows")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(ARCH "x86_64")
+    else()
+        set(ARCH "x86")
+    endif()
+    set(CMAKE_PREFIX_PATH "Qt/6.6.3/gcc_64")        ## 按照自己电脑上qt6.6.3的位置来替换
+    add_definitions(-DCSM_TARGET_WIN_GL)
+elseif(APPLE)
+    set(PLAT "macos")
+    set(ARCH "x86_64")   # 或通用二进制，可根据需要调整
+    set(CMAKE_PREFIX_PATH "/home/misaki/Qt/6.6.3/gcc_64")
+    add_definitions(-DCSM_TARGET_MAC_GL)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(PLAT "linux_64")
+    set(ARCH "x86_64")
+    set(CMAKE_PREFIX_PATH "/home/misaki/Qt6.3/6.6.3/gcc_64")
+    add_definitions(-DCSM_TARGET_LINUX_GL)
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
+
+# 渲染后端选择
+if(PLAT STREQUAL "linux_arm")
+    add_definitions(-DRENDER_BACKEND_GLES2)
+else()
+    add_definitions(-DRENDER_BACKEND_OPENGL)
+endif()
+
+message(STATUS "  当前Qt路径: ${CMAKE_PREFIX_PATH}")
+message(STATUS "  当前平台： ${PLAT}， 架构： ${ARCH}")
 
 # 设置是否为debug模式 默认为Debug
 if(NOT CMAKE_BUILD_TYPE)
@@ -16,11 +60,7 @@ endif()
 # 设置渲染方式，选择为OpenGL，不然默认是Cocos2d，编译会报错的，CMake也会给你警告的
 set(FRAMEWORK_SOURCE OpenGL)
 
-# 查找一些必要的src文件
-file(GLOB_RECURSE LAppLive2D
-        CONFIGURE_DEPENDS       # CMake 3.12+：检测到新增文件自动重新生成
-    "3rdparty/Live2D/Src/LAppLive2D/Src/*.cpp"
-)
+# 查找一些必要的src源文件
 file(GLOB_RECURSE YosugaSrc
         CONFIGURE_DEPENDS
         "src/Handle/AudioHandle/Src/*.cpp"
@@ -29,12 +69,8 @@ file(GLOB_RECURSE YosugaSrc
         "src/Handle/NetWorkHandle/Inc/*.h"
         "src/Handle/DataObjectHandle/Src/*.cpp"
         "src/Handle/DataObjectHandle/Inc/*.h"
-        "src/UI/Menu/Src/*.cpp"
-        "src/UI/Menu/Inc/*.h"
         "src/DAO/Inc/*.h"
         "src/DAO/Src/*.cpp"
-        "src/UI/Setting/Src/*.cpp"
-        "src/UI/Setting/Inc/*.h"
         "src/UI/Render/TextRender/Src/*.cpp"
         "src/UI/Render/TextRender/Inc/*.h"
         "src/Core/Src/*.cpp"
@@ -43,6 +79,18 @@ file(GLOB_RECURSE YosugaSrc
         "src/Utils/Inc/*.h"
         "src/Utils/Src/*.cpp"
 )
+
+# 如果是桌面平台，再额外添加 UI 相关目录
+if(NOT PLAT STREQUAL "linux_arm")
+    file(GLOB_RECURSE DesktopUI_Src
+            "src/UI/Menu/Src/*.cpp"
+            "src/UI/Menu/Inc/*.h"
+            "src/UI/Setting/Src/*.cpp"
+            "src/UI/Setting/Inc/*.h"
+    )
+    message(STATUS " 被主机平台额外包含的库： ${YosugaSrc}")
+    list(APPEND YosugaSrc ${DesktopUI_Src})
+endif()
 
 # 查找Qt6模块以及其他必须模块
 find_package(Qt6 COMPONENTS
@@ -57,153 +105,162 @@ find_package(Qt6 COMPONENTS
         OpenGLWidgets
         Concurrent
         REQUIRED)
-find_package(OpenGL REQUIRED)
 
-add_subdirectory(3rdparty/ElaWidgetTools)   # 添加ElaWidgetTools UI库
-add_subdirectory(3rdparty/autogui-cpp)      # 添加autogui-cpp GUI自动化库
+# 仅在非 ARM 平台查找桌面 OpenGL
+if(NOT PLAT STREQUAL "linux_arm")
+    find_package(OpenGL REQUIRED)
+else ()
+    # 若为arm平台，对于C++采用静态链接标准库，避免环境复杂出现问题
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc")
+endif ()
 
-add_executable(${PROJECT_NAME} main.cpp ${LAppLive2D} ${YosugaSrc})
-
-# 区分平台
-if(WIN32)
-    set(PLAT "windows")
-    add_definitions(-DCSM_TARGET_WIN_GL)    # 告诉 Live2D 框架，当前平台使用 OpenGL
-elseif(APPLE)
-    set(PLAT "macos")
-    add_definitions(-DCSM_TARGET_MAC_GL)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
-        set(PLAT "linux_arm")
-        add_definitions(-DCSM_TARGET_LINUX_GL)
-    else()
-        set(PLAT "linux_64")
-        add_definitions(-DCSM_TARGET_LINUX_GL)
-    endif()
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
-    set(PLAT "macos")   # 统一按 macos 处理，后面再细分 x86_64 / arm64
+# 添加第三方子项目
+if(NOT PLAT STREQUAL "linux_arm")
+    ### 部分第三方子项目与嵌入式Linux不兼容(嵌入式Linux环境复杂，有的没有桌面环境，因此不一定支持窗口)
+    add_subdirectory(3rdparty/ElaWidgetTools)   # 添加ElaWidgetTools UI库
+    add_subdirectory(3rdparty/autogui-cpp)      # 添加autogui-cpp GUI自动化库
+else()
+    message(STATUS "ARM platform: skipping ElaWidgetTools and autogui-cpp (cross‑compile them separately)")
 endif()
 
-# 架构文件夹名（Windows 分 x86 / x86_64，Linux 分 x86_64 / arm64，macOS 通用二进制）
-if(WIN32)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(ARCH "x86_64")
+#### 主可执行文件
+add_executable(${PROJECT_NAME} main.cpp ${YosugaSrc})
+
+#### 库导入路径配置
+# Framework 静态库
+if(PLAT STREQUAL "linux_arm")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        ### 注意此处需要根据你的framework的放置目录进行调整
+        set(FRAMEWORK_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Live2D/Lib/Debug/linux_arm/framework/misaki_rk3566/libFramework.a")
     else()
-        set(ARCH "x86")
+        set(FRAMEWORK_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Live2D/Lib/Release/linux_arm/framework/misaki_rk3566/libFramework.a")
     endif()
-elseif(PLAT STREQUAL "linux_arm")
-    set(ARCH "arm64")
 else()
-    set(ARCH "x86_64")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(LIB_CONFIG "Debug")
+    else()
+        set(LIB_CONFIG "Release")
+    endif()
+    set(LIB_BASE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Live2D/Lib")
+    set(LIB_CONFIG_DIR "${LIB_BASE}/${LIB_CONFIG}/${PLAT}")
+    set(FRAMEWORK_LIB_PATH "${LIB_CONFIG_DIR}/framework/libFramework.a")
+endif()
+
+add_library(Framework STATIC IMPORTED GLOBAL)
+set_target_properties(Framework PROPERTIES IMPORTED_LOCATION "${FRAMEWORK_LIB_PATH}")
+message(STATUS "Framework 库: ${FRAMEWORK_LIB_PATH}")
+
+# Core 静态库 该库由官方自行编译提供，理论上是平台无关的，但是可能和glibc版本有关，太老的glibc版本不一定能使用
+# 因为Core没有开源，也因此才叫Live2D SDK,而不是Live2D Lib。个人觉得不如开源出来，像Qt那样就挺好。
+if(PLAT STREQUAL "linux_arm")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CORE_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Live2D/Lib/Debug/linux_arm/live2d/static_lib/arm64/libLive2DCubismCore.a")
+    else()
+        set(CORE_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Live2D/Lib/Release/linux_arm/live2d/static_lib/arm64/libLive2DCubismCore.a")
+    endif()
+else()
+    if(PLAT STREQUAL "windows")
+        set(CORE_LIB_PATH "${LIB_CONFIG_DIR}/live2d/static_lib/x86_64/Live2DCubismCore.lib")
+    else()
+        set(CORE_LIB_PATH "${LIB_CONFIG_DIR}/live2d/static_lib/x86_64/libLive2DCubismCore.a")
+    endif()
+endif()
+
+add_library(Live2DCubismCore STATIC IMPORTED GLOBAL)
+set_target_properties(Live2DCubismCore PROPERTIES IMPORTED_LOCATION "${CORE_LIB_PATH}")
+message(STATUS "Live2D Core 库: ${CORE_LIB_PATH}")
+
+# 导入 LAppLive2D 子项目 Live2D 应用层，静态库
+# 依赖顺序：lapp_live2d -> Framework -> Live2DCubismCore
+add_subdirectory(3rdparty/Live2D/Src/LAppLive2D)
+
+# LAppOpenGL.hpp 根据平台选择 GL / GLES2 头文件，为 lapp_live2d 补充对应路径
+if(NOT PLAT STREQUAL "linux_arm")
+    target_include_directories(lapp_live2d PUBLIC
+            3rdparty/Live2D/Src/glew/include
+            3rdparty/Live2D/Src/glew/include/GL
+            3rdparty/Live2D/Src/glfw/include
+            3rdparty/Live2D/Src/glfw/include/GLFW
+    )
+else()
+    target_include_directories(lapp_live2d PUBLIC
+            /home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/include
+            /home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/include/GLES2
+    )
+endif()
+
+# GLFW 和 GLEW（仅桌面平台需要）
+if(NOT PLAT STREQUAL "linux_arm")
+    # glfw
+    add_library(glfw3 STATIC IMPORTED GLOBAL)
+    set_target_properties(glfw3 PROPERTIES IMPORTED_LOCATION "${LIB_CONFIG_DIR}/glfw/libglfw3.a")
+    message(STATUS "GLFW 库: libglfw3.a")
+
+    # glew
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        if(PLAT STREQUAL "windows")
+            set(GLEW_LIB_NAME "libglew32d.dll.a")
+        else()
+            set(GLEW_LIB_NAME "libGLEWd.a")
+        endif()
+    else()
+        if(PLAT STREQUAL "windows")
+            set(GLEW_LIB_NAME "libglew32.dll.a")
+        else()
+            set(GLEW_LIB_NAME "libGLEW.a")
+        endif()
+    endif()
+    add_library(GLEW STATIC IMPORTED GLOBAL)
+    set_target_properties(GLEW PROPERTIES IMPORTED_LOCATION "${LIB_CONFIG_DIR}/glfw/${GLEW_LIB_NAME}")
+    message(STATUS "GLEW 库: ${GLEW_LIB_NAME}")
 endif()
 
 #### 以下为链接相关的内容
-
-# 根据平台 + 架构生成“库搜索路径”和“库文件名”
-set(LIB_BASE "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Live2D/Lib")
-# 根据当前构建类型直接确定子目录（Debug 或 Release）
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(LIB_CONFIG "Debug")
+if(PLAT STREQUAL "linux_arm")       ## 针对嵌入式Linux的配置，部分条目需要根据你的soc以及sysroot进行修改
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            lapp_live2d
+            Framework
+            Live2DCubismCore
+            # Mali GPU 驱动完整链接（EGLFS 必需）
+            -lmali-hook     # 注意此处，你的soc不一定是该GPU，可能需要修改
+            -Wl,--whole-archive -lmali-hook-injector -Wl,--no-whole-archive
+            -lmali
+            -ldrm
+            -lEGL
+            -lGLESv2
+            # Qt 模块（从交叉编译的 Qt）
+            Qt::Core Qt::Gui Qt::Widgets Qt::Network Qt::Svg Qt::SerialPort
+            Qt::WebSockets Qt::Multimedia Qt::OpenGLWidgets Qt::Concurrent
+            #
+            # ElaWidgetTools autogui-cpp
+    )
 else()
-    set(LIB_CONFIG "Release")
+    # 桌面平台
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            lapp_live2d
+            Framework
+            glfw3
+            GLEW
+            Live2DCubismCore
+            $<$<BOOL:${WIN32}>:opengl32>
+            $<$<BOOL:${WIN32}>:glu32>
+            ElaWidgetTools
+            autogui-cpp
+            Qt::Core Qt::Gui Qt::Widgets Qt::Network Qt::Svg Qt::SerialPort
+            Qt::WebSockets Qt::Multimedia Qt::OpenGLWidgets Qt::Concurrent
+    )
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT PLAT STREQUAL "linux_arm")
+        find_package(X11 REQUIRED)
+        target_link_libraries(${PROJECT_NAME} PRIVATE X11::X11)
+    endif()
+    if(APPLE)
+        find_library(COREGRAPHICS_LIB CoreGraphics REQUIRED)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${COREGRAPHICS_LIB})
+    endif()
 endif()
 
-message(STATUS "当前平台与编译方式: ${PLAT} : ${ARCH} : ${LIB_CONFIG}" )
-
-# 拼接完整库目录
-set(LIB_CONFIG_DIR "${LIB_BASE}/${LIB_CONFIG}/${PLAT}")
-# 需要链接的库列表
-# Framework（只有 .a，且 Debug/Release 同名）
-add_library(Framework STATIC IMPORTED GLOBAL)
-set_target_properties(Framework PROPERTIES
-        IMPORTED_LOCATION "${LIB_CONFIG_DIR}/framework/libFramework.a")
-message(STATUS "当前Framework库: libFramework.a")
-
-# glfw
-add_library(glfw3 STATIC IMPORTED GLOBAL)
-set_target_properties(glfw3 PROPERTIES
-        IMPORTED_LOCATION "${LIB_CONFIG_DIR}/glfw/libglfw3.a")
-message(STATUS "当前GLEW库: libglfw3.a")
-
-# glew Debug/Release 同名，Debug 同时提供了 .so，此处用 .a
-# Debug 带 'd' 后缀，Release 不带
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # GLEW Unix与Windows生成行为不一致
-    if(PLAT STREQUAL "windows")
-        set(GLEW_LIB_NAME "libglew32d.dll.a")
-    else ()   # 其他平台
-        set(GLEW_LIB_NAME "libGLEWd.a")
-    endif ()
-elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-    if (PLAT STREQUAL "windows")
-        set(GLEW_LIB_NAME "libglew32.dll.a")
-    else ()
-        set(GLEW_LIB_NAME "libGLEW.a")
-    endif ()
-endif()
-add_library(GLEW STATIC IMPORTED GLOBAL)
-set_target_properties(GLEW PROPERTIES
-        IMPORTED_LOCATION "${LIB_CONFIG_DIR}/glfw/${GLEW_LIB_NAME}")
-message(STATUS "当前GLEW库: ${GLEW_LIB_NAME}")
-
-# Live2D Cubism Core 静态
-add_library(Live2DCubismCore STATIC IMPORTED GLOBAL)
-if (PLAT STREQUAL "windows")
-    set_target_properties(Live2DCubismCore PROPERTIES
-            IMPORTED_LOCATION "${LIB_CONFIG_DIR}/live2d/static_lib/x86_64/Live2DCubismCore.lib")
-    message(STATUS "当前Live2D库: Live2DCubismCore.lib")
-else ()
-    set_target_properties(Live2DCubismCore PROPERTIES
-            IMPORTED_LOCATION "${LIB_CONFIG_DIR}/live2d/static_lib/x86_64/libLive2DCubismCore.a")
-    message(STATUS "当前Live2D库: libLive2DCubismCore.a")
-endif ()
-
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        Framework
-        glfw3
-        GLEW
-        Live2DCubismCore
-        $<$<BOOL:${WIN32}>:opengl32>    # WIN32 为真时才链接
-        $<$<BOOL:${WIN32}>:glu32>       # WIN32 为真时才链接
-)
-# 不论平台统一需要链接的库
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        ElaWidgetTools
-        autogui-cpp
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
-        Qt::Network
-        Qt::Svg
-        Qt::SerialPort
-        Qt::WebSockets
-        Qt::Multimedia
-        Qt::OpenGLWidgets
-        Qt::Concurrent
-)
-
-# 全局热键 (PTT) 所需平台库
-if(APPLE)
-    find_library(COREGRAPHICS_LIB CoreGraphics REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${COREGRAPHICS_LIB})
-endif()
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    find_package(X11 REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE X11::X11)
-endif()
-
-# 添加头文件
-target_include_directories(${PROJECT_NAME}
-    PRIVATE
-        3rdparty/Live2D/Src/Framework/src
-        3rdparty/Live2D/Src/glew/include
-        3rdparty/Live2D/Src/glew/include/GL
-        3rdparty/Live2D/Src/glfw/include
-        3rdparty/Live2D/Src/glfw/include/GLFW
-        3rdparty/Live2D/Src/Core/include
-        3rdparty/Live2D/Src/stb
-        3rdparty/Live2D/Src/LAppLive2D/Inc
+# 头文件路径
+target_include_directories(${PROJECT_NAME} PRIVATE
         3rdparty/autogui-cpp/src
         src/Handle/AudioHandle/Inc
         src/Handle/NetWorkHandle/Inc
@@ -216,19 +273,13 @@ target_include_directories(${PROJECT_NAME}
         src/Utils/Inc
 )
 
-
-
-#### 构建时额外复制一些必要的文件与运行库
-
-# 将资源文件夹 'other' 复制到构建目录
+# 资源复制（所有平台）
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/other/Resources"
         DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-# 复制 Live2D 渲染所需的 Shader 文件
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/other/FrameworkShaders"
         DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
-
-# 对于windows，复制一些必要的dll库
+# Windows 特有的 DLL 复制
 if(PLAT STREQUAL "windows")
     # 自动复制Ela的DLL
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -301,6 +352,4 @@ if(PLAT STREQUAL "windows")
         file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/Live2D/Lib/Debug/windows/live2d/static_lib/x86_64/Live2DCubismCore.dll"
                 DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
     endif ()
-elseif ()   # 其他平台
-    set()
-endif ()
+endif()

@@ -6,13 +6,13 @@
  */
 
 #include "LAppPal.hpp"
+#include "LAppDefine.hpp"
+#include <chrono>
 #include <cstdio>
 #include <stdarg.h>
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <Model/CubismMoc.hpp>
 #include "LAppDefine.hpp"
 #ifdef _WIN32
@@ -93,11 +93,24 @@ csmFloat32  LAppPal::GetDeltaTime()
     return static_cast<csmFloat32>(s_deltaTime);
 }
 
+static std::chrono::steady_clock::time_point s_lastTime;
+static double s_deltaTime = 0.0;
 void LAppPal::UpdateTime()
 {
-    s_currentFrame = glfwGetTime();
-    s_deltaTime = s_currentFrame - s_lastFrame;
-    s_lastFrame = s_currentFrame;
+    // s_currentFrame = glfwGetTime();
+    // s_deltaTime = s_currentFrame - s_lastFrame;
+    // s_lastFrame = s_currentFrame;
+    static bool initialized = false;
+    if (!initialized)
+    {
+        s_lastTime = std::chrono::steady_clock::now();
+        initialized = true;
+        return;
+    }
+    auto now = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = now - s_lastTime;
+    s_deltaTime = diff.count();
+    s_lastTime = now;
 }
 
 void LAppPal::PrintLog(const csmChar* format, ...)

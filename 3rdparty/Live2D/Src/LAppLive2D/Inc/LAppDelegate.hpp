@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "LAppOpenGL.hpp"
 #include "LAppAllocator.hpp"
-#include "GLCore.h"
+#include "IRenderContext.hpp"
+#include <functional>
 
 class LAppView;
 class LAppTextureManager;
@@ -37,17 +37,29 @@ public:
     static void ReleaseInstance();
 
     // 新增
+    // resize 由应用层(GLCore::resizeGL)调用，通知LApp窗口尺寸变更
     void resize(int width, int height);
 
     // 新增
     void update();
 
+    IRenderContext* GetRenderContext() const { return _renderContext; }
+    void SetRenderContext(IRenderContext* ctx) { _renderContext = ctx; }
+
+    // 窗口大小变更回调 解耦 AppContext/GLCore 依赖
+    // 当模型加载后需要调整窗口大小时，LAppLive2DManager 通过此回调通知应用层
+    using WindowResizeFunc = std::function<void(int width, int height)>;
+    void SetWindowResizeCallback(WindowResizeFunc cb) { _onResizeWindow = std::move(cb); }
+    void NotifyWindowResize(int width, int height) { if (_onResizeWindow) _onResizeWindow(width, height); }
 
     /**
     * @brief   APPに必要なものを初期化する。
+    * @param windowWidth   窗口宽度（像素）
+    * @param windowHeight  窗口高度（像素）
     */
-    //bool Initialize();
-    bool Initialize(GLCore* window);
+    // bool Initialize(GLCore* window);              // 原
+    // bool Initialize(QWidget* window);             // 中间解耦版本
+    bool Initialize(int windowWidth, int windowHeight); // 完全解耦Qt，仅传入尺寸
 
     /**
     * @brief   解放する。
@@ -67,7 +79,8 @@ public:
     * @param[in]       action            実行結果
     * @param[in]       modify
     */
-    void OnMouseCallBack(GLFWwindow* window, int button, int action, int modify);
+    // void OnMouseCallBack(GLFWwindow* window, int button, int action, int modify);
+    void OnMouseCallBack(int button, int action, int modify);
 
     /**
     * @brief   OpenGL用 glfwSetCursorPosCallback用関数。
@@ -76,7 +89,8 @@ public:
     * @param[in]       x                 x座標
     * @param[in]       y                 x座標
     */
-    void OnMouseCallBack(GLFWwindow* window, double x, double y);
+    // void OnMouseCallBack(GLFWwindow* window, double x, double y);
+    void OnMouseCallBack(double x, double y);
 
     /**
     * @brief シェーダーを登録する。
@@ -84,9 +98,12 @@ public:
     GLuint CreateShader();
 
     /**
-    * @brief   Window情報を取得する。
+    * @brief   Window尺寸を取得する。
     */
-    GLCore* GetWindow() { return _window; }     // Misaki 修改
+    // GLCore* GetWindow() { return _window; }     // 原
+    // QWidget* GetWindow() { return _window; }     // 中间版本
+    int GetWindowWidth() const { return _windowWidth; }    // 完全解耦Qt
+    int GetWindowHeight() const { return _windowHeight; }  // 完全解耦Qt
 
     /**
     * @brief   View情報を取得する。
@@ -126,10 +143,13 @@ private:
      */
     bool CheckShader(GLuint shaderId);
 
+    IRenderContext* _renderContext = nullptr;
+    WindowResizeFunc _onResizeWindow;              ///< 窗口大小回调
     LAppAllocator _cubismAllocator;              ///< Cubism SDK Allocator
     Csm::CubismFramework::Option _cubismOption;  ///< Cubism SDK Option
     //GLFWwindow* _window;                         ///< OpenGL ウィンドウ
-    GLCore* _window;                             ///< Misaki 修改 
+    // GLCore* _window;                             ///< Misaki 修改 
+    // QWidget* _window;                             ///< 使用QWidget基类，解耦GLCore
     LAppView* _view;                             ///< View情報
     bool _captured;                              ///< クリックしているか
     float _mouseX;                               ///< マウスX座標
@@ -141,23 +161,23 @@ private:
     int _windowHeight;                           ///< Initialize関数で設定したウィンドウ高さ
 };
 
-class EventHandler
-{
-public:
-    /**
-    * @brief   glfwSetMouseButtonCallback用コールバック関数。
-    */
-    static void OnMouseCallBack(GLFWwindow* window, int button, int action, int modify)
-    {
-        LAppDelegate::GetInstance()->OnMouseCallBack(window, button, action, modify);
-    }
-
-    /**
-    * @brief   glfwSetCursorPosCallback用コールバック関数。
-    */
-    static void OnMouseCallBack(GLFWwindow* window, double x, double y)
-    {
-         LAppDelegate::GetInstance()->OnMouseCallBack(window, x, y);
-    }
-
-};
+// class EventHandler
+// {
+// public:
+//     /**
+//     * @brief   glfwSetMouseButtonCallback用コールバック関数。
+//     */
+//     static void OnMouseCallBack(GLFWwindow* window, int button, int action, int modify)
+//     {
+//         LAppDelegate::GetInstance()->OnMouseCallBack(window, button, action, modify);
+//     }
+//
+//     /**
+//     * @brief   glfwSetCursorPosCallback用コールバック関数。
+//     */
+//     static void OnMouseCallBack(GLFWwindow* window, double x, double y)
+//     {
+//          LAppDelegate::GetInstance()->OnMouseCallBack(window, x, y);
+//     }
+//
+// };

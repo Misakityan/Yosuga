@@ -8,8 +8,7 @@
 #pragma once
 
 #include <string>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "LAppOpenGL.hpp"
 #include <Type/csmVector.hpp>
 
 /**
@@ -26,7 +25,8 @@ public:
     */
     struct TextureInfo
     {
-        GLuint id;              ///< テクスチャID
+        // GLuint id;              ///< テクスチャID
+        uintptr_t id;
         int width;              ///< 横幅
         int height;             ///< 高さ
         std::string fileName;   ///< ファイル名

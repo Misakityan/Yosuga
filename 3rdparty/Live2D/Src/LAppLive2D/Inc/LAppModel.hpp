@@ -17,6 +17,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include "LAppOpenGL.hpp"
 /**
  * @brief ユーザーが実際に使用するモデルの実装クラス<br>
  *         モデル生成、機能コンポーネント生成、更新処理とレンダリングの呼び出しを行う。
@@ -286,5 +287,6 @@ private:
     Live2D::Cubism::Framework::csmFloat32 alpha = 0.8f; // 滤波系数，范围在0到1之间，值越小，平滑效果越强
     Live2D::Cubism::Framework::csmFloat32 filteredValue = 0.0f; // 滤波后的值
 
-    Csm::Rendering::CubismOffscreenSurface_OpenGLES2  _renderBuffer;   ///< フレームバッファ以外の描画先
+    // Csm::Rendering::CubismOffscreenSurface_OpenGLES2  _renderBuffer;   ///< フレームバッファ以外の描画先
+    CUBISM_OFFSCREEN_TYPE  _renderBuffer;
 };

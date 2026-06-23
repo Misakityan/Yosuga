@@ -7,7 +7,8 @@
 
 #include "LAppSprite.hpp"
 
-LAppSprite::LAppSprite(float x, float y, float width, float height, GLuint textureId, GLuint programId)
+// LAppSprite::LAppSprite(float x, float y, float width, float height, GLuint textureId, GLuint programId) // 原
+LAppSprite::LAppSprite(float x, float y, float width, float height, uintptr_t textureId, uintptr_t programId) // 抽象类型
     : _rect()
 {
     _rect.left = (x - width * 0.5f);
@@ -16,11 +17,15 @@ LAppSprite::LAppSprite(float x, float y, float width, float height, GLuint textu
     _rect.down = (y - height * 0.5f);
     _textureId = textureId;
 
-    // 何番目のattribute変数か
-    _positionLocation = glGetAttribLocation(programId, "position");
-    _uvLocation      = glGetAttribLocation(programId, "uv");
-    _textureLocation = glGetUniformLocation(programId, "texture");
-    _colorLocation = glGetUniformLocation(programId, "baseColor");
+    // 原代码：直接传GLuint，改用static_cast适配抽象类型uintptr_t
+    // _positionLocation = glGetAttribLocation(programId, "position");
+    // _uvLocation      = glGetAttribLocation(programId, "uv");
+    // _textureLocation = glGetUniformLocation(programId, "texture");
+    // _colorLocation = glGetUniformLocation(programId, "baseColor");
+    _positionLocation = glGetAttribLocation(static_cast<GLuint>(programId), "position");
+    _uvLocation      = glGetAttribLocation(static_cast<GLuint>(programId), "uv");
+    _textureLocation = glGetUniformLocation(static_cast<GLuint>(programId), "texture");
+    _colorLocation = glGetUniformLocation(static_cast<GLuint>(programId), "baseColor");
 
     _spriteColor[0] = 1.0f;
     _spriteColor[1] = 1.0f;
@@ -72,11 +77,13 @@ void LAppSprite::Render() const
 
 
     // モデルの描画
-    glBindTexture(GL_TEXTURE_2D, _textureId);
+    // glBindTexture(GL_TEXTURE_2D, _textureId);              // 原
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(_textureId)); // 抽象类型转换
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void LAppSprite::RenderImmidiate(GLuint textureId, const GLfloat uvVertex[8]) const
+// void LAppSprite::RenderImmidiate(GLuint textureId, const GLfloat uvVertex[8]) const    // 原
+void LAppSprite::RenderImmidiate(uintptr_t textureId, const float uvVertex[8]) const       // 抽象类型
 {
     if (_maxWidth == 0 || _maxHeight == 0)
     {
@@ -106,7 +113,8 @@ void LAppSprite::RenderImmidiate(GLuint textureId, const GLfloat uvVertex[8]) co
     glUniform4f(_colorLocation, _spriteColor[0], _spriteColor[1], _spriteColor[2], _spriteColor[3]);
 
     // モデルの描画
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    // glBindTexture(GL_TEXTURE_2D, textureId);              // 原
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureId)); // 抽象类型转换
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 

@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "LAppOpenGL.hpp"
+#include "ISpriteRenderer.hpp"     // 渲染后端抽象
 
 /**
 * @brief スプライトを実装するクラス。
@@ -16,7 +16,8 @@
 * テクスチャID、Rectの管理。
 *
 */
-class LAppSprite
+// class LAppSprite                                 // 原
+class LAppSprite : public ISpriteRenderer           // 继承渲染抽象接口
 {
 public:
     /**
@@ -41,7 +42,8 @@ public:
     * @param[in]       textureId    テクスチャID
     * @param[in]       programId    シェーダID
     */
-    LAppSprite(float x, float y, float width, float height, GLuint textureId, GLuint programId);
+    // LAppSprite(float x, float y, float width, float height, GLuint textureId, GLuint programId);  // 原
+    LAppSprite(float x, float y, float width, float height, uintptr_t textureId, uintptr_t programId); // 抽象类型
 
     /**
     * @brief デストラクタ
@@ -52,7 +54,8 @@ public:
     * @brief Getter テクスチャID
     * @return テクスチャIDを返す
     */
-    GLuint GetTextureId() { return _textureId; }
+    // GLuint GetTextureId() { return _textureId; }       // 原
+    uintptr_t GetTextureId() const override { return _textureId; } // 抽象类型
 
     /**
     * @brief 描画する
@@ -64,7 +67,8 @@ public:
     * @brief テクスチャIDを指定して描画する
     *
     */
-    void RenderImmidiate(GLuint textureId, const GLfloat uvVertex[8]) const;
+    // void RenderImmidiate(GLuint textureId, const GLfloat uvVertex[8]) const;   // 原
+    void RenderImmidiate(uintptr_t textureId, const float uvVertex[8]) const override; // 抽象类型
 
     /**
     * @brief コンストラクタ
@@ -72,7 +76,8 @@ public:
     * @param[in]       pointX    x座標
     * @param[in]       pointY    y座標
     */
-    bool IsHit(float pointX, float pointY) const;
+    // bool IsHit(float pointX, float pointY) const;     // 原
+    bool IsHit(float pointX, float pointY) const override; // 接口实现
 
     /**
      * @brief 色設定
@@ -82,7 +87,8 @@ public:
      * @param[in]       b (0.0~1.0)
      * @param[in]       a (0.0~1.0)
      */
-    void SetColor(float r, float g, float b, float a);
+    // void SetColor(float r, float g, float b, float a);      // 原
+    void SetColor(float r, float g, float b, float a) override; // 接口实现
 
     /**
      * @brief サイズ再設定
@@ -92,7 +98,8 @@ public:
      * @param[in]       width        横幅
      * @param[in]       height       高さ
      */
-    void ResetRect(float x, float y, float width, float height);
+    // void ResetRect(float x, float y, float width, float height);     // 原
+    void ResetRect(float x, float y, float width, float height) override; // 接口实现
 
     /**
      * @brief ウインドウサイズ設定
@@ -100,10 +107,12 @@ public:
      * @param[in]       width        横幅
      * @param[in]       height       高さ
      */
-    void SetWindowSize(int width, int height);
+    // void SetWindowSize(int width, int height);     // 原
+    void SetWindowSize(int width, int height) override; // 接口实现
 
 private:
-    GLuint _textureId;      ///< テクスチャID
+    // GLuint _textureId;      ///< テクスチャID  原
+    uintptr_t _textureId;       ///< テクスチャID  抽象类型
     Rect _rect;             ///< 矩形
     int _positionLocation;  ///< 位置アトリビュート
     int _uvLocation;        ///< UVアトリビュート

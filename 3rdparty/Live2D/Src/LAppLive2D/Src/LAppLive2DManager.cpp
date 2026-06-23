@@ -15,8 +15,7 @@
 #include <filesystem>      // Linux / macOS 用 std::filesystem
 #include <algorithm>
 #endif
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "LAppOpenGL.hpp"
 #include <Rendering/CubismRenderer.hpp>
 #include "LAppPal.hpp"
 #include "LAppDefine.hpp"
@@ -222,8 +221,8 @@ void LAppLive2DManager::OnUpdate() const
 {
     //glfwGetWindowSize(LAppDelegate::GetInstance()->GetWindow(), &width, &height);
 
-    int width = LAppDelegate::GetInstance()->GetWindow()->width();
-    int height = LAppDelegate::GetInstance()->GetWindow()->height();
+    int width = LAppDelegate::GetInstance()->GetWindowWidth();
+    int height = LAppDelegate::GetInstance()->GetWindowHeight();
 
     csmUint32 modelCount = _models.GetSize();
     for (csmUint32 i = 0; i < modelCount; ++i)
@@ -264,17 +263,16 @@ void LAppLive2DManager::OnUpdate() const
         LAppDelegate::GetInstance()->GetView()->PostModelDraw(*model);
     }
 }
-#include <AppContext.h>
+// #include <AppContext.h>                         // 解耦，改用LAppDelegate回调
 void LAppLive2DManager::ModelSizeChange(const int Sacle = 15)
 {
-    // 加载完后根据模型大小来重新设置当前窗口大小
     const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / Sacle);
     const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / Sacle);
 
-    // 确保在主线程调用 UI 相关操作
-    if(AppContext::GetGLCore()) {
-        AppContext::GetGLCore()->setWindowSize(width, height);
-    }
+    // if(AppContext::GetGLCore()) {                               // 原
+    //     AppContext::GetGLCore()->setWindowSize(width, height);
+    // }
+    LAppDelegate::GetInstance()->NotifyWindowResize(width, height); // 通过回调通知应用层
     LAppPal::PrintLogLn("[APP]窗口尺寸重新设置为: W: %d H: %d", width, height);
 }
 void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const std::string& fileName) 
@@ -289,7 +287,8 @@ void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const st
     // 加载完后根据模型大小来重新设置当前窗口大小
     const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);
     const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / 15.0);
-    AppContext::GetGLCore()->setWindowSize(width, height);      // 获取GLCore上下文
+    // AppContext::GetGLCore()->setWindowSize(width, height);      // 原
+    LAppDelegate::GetInstance()->NotifyWindowResize(width, height); // 通过回调通知应用层
     LAppPal::PrintLogLn("[APP]窗口尺寸重新设置为: W: %d H: %d", width, height);
     /*
      * 提供一个半透明表示模型的示例。
@@ -352,14 +351,13 @@ void LAppLive2DManager::MountLoadedModel(LAppModel* model)
     }
 
     // 加载完后根据模型大小来重新设置当前窗口大小
-    const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);
-    const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / 15.0);
-
-    // 确保在主线程调用 UI 相关操作
-    if(AppContext::GetGLCore()) {
-        AppContext::GetGLCore()->setWindowSize(width, height);
-    }
-    LAppPal::PrintLogLn("[APP]窗口尺寸重新设置为: W: %d H: %d", width, height);
+    // 原代码直接调AppContext，改为统一使用ModelSizeChange
+    // const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);
+    // const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / 15.0);
+    // if(AppContext::GetGLCore()) {
+    //     AppContext::GetGLCore()->setWindowSize(width, height);
+    // }
+    ModelSizeChange(15);                                // 统一入口，回调通知应用层
 
     // 设置渲染目标等
     {

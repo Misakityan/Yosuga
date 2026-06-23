@@ -2,7 +2,13 @@
 
 #include <QtWidgets/QWidget>
 #include <QOpenGLWidget>
+#if !defined(EMBEDDED_LINUX)
 #include "menu.h"
+#endif
+#ifdef EMBEDDED_LINUX
+#include <QPushButton>
+#endif
+
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
@@ -79,7 +85,13 @@ private:
     double frameRate = 60.0;        /// 帧率
     static QMap<QString, double> frameRateMap; /// 帧率映射表
     QTimer* frameTimer;             /// 帧控制定时器
+#if !defined(EMBEDDED_LINUX)
     Menu *contextMenu;              /// 使用 Menu 类
+#endif
+#ifdef EMBEDDED_LINUX
+    QPushButton *pttButton;         /// 嵌入式平台PTT按钮
+#endif
+
     bool isLeftPressed;             /// 鼠标左键是否按下
     bool isRightPressed;            /// 鼠标右键是否按下
     QPoint currentPos;              /// 当前鼠标位置
