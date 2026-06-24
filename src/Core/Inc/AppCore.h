@@ -24,7 +24,7 @@ class DeviceTcpServer;
 class DeviceWebSocketServer;
 
 class AppCore final : public QObject
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(EMBEDDED_LINUX)
     , public QAbstractNativeEventFilter
 #endif
 {
@@ -54,14 +54,15 @@ public:
 
 public:
     void SingleExchange();
-    void tryToInit() { return; }
+    void tryToInit() { }
 
     // PTT 按住说话
     void startPttRecording();
     void stopPttRecording();
-
+#if !defined(EMBEDDED_LINUX)
     void setupGlobalHotkey();
     void cleanupGlobalHotkey();
+#endif
 
 #if defined(Q_OS_WIN)
 private:
@@ -70,7 +71,7 @@ private:
     bool m_isPttDown = false;
     UINT m_hotkeyVKey = VK_OEM_3;
 
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_LINUX) && !defined(EMBEDDED_LINUX)
 private:
     bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
     void onDebounceStop();

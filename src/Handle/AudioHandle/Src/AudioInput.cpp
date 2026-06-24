@@ -53,7 +53,6 @@ void AudioInput::setAudioSettings(const int rate, const int channels)
 {
     m_format.setSampleRate(rate);
     m_format.setChannelCount(channels);
-    // 为了生成标准 WAV 且方便计算 RMS，强制设为 Int16
     m_format.setSampleFormat(QAudioFormat::Int16);
 
     // 检查设备是否支持该格式，不支持则使用最接近的
@@ -72,6 +71,30 @@ void AudioInput::setAudioPath(const QString &path, const QString &fileName)
 
 void AudioInput::startAudio()
 {
+#ifdef EMBEDDED_LINUX
+    m_rawPCMData.clear();
+    if (!m_arecordProcess) {
+        m_arecordProcess = new QProcess(this);
+        connect(m_arecordProcess, &QProcess::readyReadStandardOutput, this, [this]() {
+            m_rawPCMData.append(m_arecordProcess->readAllStandardOutput());
+        });
+    } else if (m_arecordProcess->state() != QProcess::NotRunning) {
+        m_arecordProcess->terminate();
+        m_arecordProcess->waitForFinished(1000);
+    }
+    m_arecordProcess->start("arecord", {
+        "-D", "hw:0,0", "-f", "S16_LE",
+        "-r", QString::number(m_format.sampleRate()),
+        "-c", QString::number(m_format.channelCount()),
+        "-t", "raw", "-q", "-"
+    });
+    if (m_arecordProcess->waitForStarted(1000)) {
+        qDebug() << "Started recording via arecord: hw:0,0"
+                 << m_format.sampleRate() << "Hz" << m_format.channelCount() << "ch S16_LE";
+    } else {
+        qCritical() << "Failed to start arecord";
+    }
+#else
     // 每次开始前重新创建 QAudioSource，确保状态重置
     if (m_audioSource) {
         delete m_audioSource;
@@ -79,8 +102,6 @@ void AudioInput::startAudio()
     }
 
     m_audioSource = new QAudioSource(m_currentDevice, m_format, this);
-
-    // 调大缓冲区以避免溢出
     m_audioSource->setBufferSize(128000);
 
     // start() 返回一个 QIODevice，可以从中读取数据
@@ -92,14 +113,21 @@ void AudioInput::startAudio()
     } else {
         qCritical() << "Failed to start audio recording.";
     }
+#endif
 }
 
 void AudioInput::stopAudio()
 {
+#ifdef EMBEDDED_LINUX
+    if (m_arecordProcess && m_arecordProcess->state() != QProcess::NotRunning) {
+        m_arecordProcess->terminate();
+        m_arecordProcess->waitForFinished(2000);
+    }
+#else
     if (m_audioSource) {
         m_audioSource->stop();
-        // 注意：不要立即 delete m_audioSource，某些情况下可能导致 crash，停止即可
     }
+#endif
 
     // 停止所有定时器
     m_timer->stop();

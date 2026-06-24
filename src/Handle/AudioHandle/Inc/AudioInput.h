@@ -12,6 +12,9 @@
 #include <vector>
 #include <QScopedPointer>
 #include <QMutex>
+#ifdef EMBEDDED_LINUX
+#include <QProcess>
+#endif
 
 /**
  * @brief  录音模块
@@ -150,5 +153,8 @@ private:
     qreal m_smoothRms = 0.0;                /// 平滑RMS值(用于防止低频杂波突然打断静音检测)
 
     bool m_hasVoiceDetected = false;        /// 是否已检测到人声
+#ifdef EMBEDDED_LINUX
+    QProcess *m_arecordProcess = nullptr;   /// 嵌入式平台使用arecord录音
+#endif
 };
 

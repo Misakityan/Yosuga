@@ -1,0 +1,112 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "description": "所有平台的公共基础配置"
+    },
+    {
+      "name": "desktop-base",
+      "hidden": true,
+      "inherits": "base",
+      "description": "桌面平台公共基础配置：固定 Qt 6.6.3"
+    },
+    {
+      "name": "embedded-base",
+      "hidden": true,
+      "inherits": "base",
+      "description": "嵌入式交叉编译公共基础配置，暂时只支持arm64架构",
+      "generator": "Unix Makefiles",
+      "cacheVariables": {
+        "TARGET_ARCH": "arm64",
+        "GLESv2_FOUND": "TRUE",
+        "EGL_FOUND": "TRUE",
+        "HAVE_EGL": "ON",
+        "HAVE_GLESv2": "ON"
+      }
+    },
+    {
+      "name": "linux-native",
+      "inherits": "desktop-base",
+      "displayName": "Linux Desktop x86_64",
+      "description": "本地 Linux 桌面编译 (GCC + Ninja)，Qt 6.6.3 固定路径",
+      "binaryDir": "${sourceDir}/build_linux",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "/home/misaki/Qt6.3/6.6.3/gcc_64"
+      }
+    },
+    {
+      "name": "windows-mingw",
+      "inherits": "desktop-base",
+      "displayName": "Windows MinGW x64",
+      "description": "Windows 桌面编译 (MinGW-w64 + Ninja)，Qt 6.6.3 固定路径",
+      "binaryDir": "${sourceDir}/build_win_mingw",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.6.3/mingw_64",
+        "CMAKE_C_COMPILER": "C:/mingw64/bin/gcc.exe",
+        "CMAKE_CXX_COMPILER": "C:/mingw64/bin/g++.exe"
+      }
+    },
+    {
+      "name": "windows-msvc",
+      "inherits": "desktop-base",
+      "displayName": "Windows MSVC x64",
+      "description": "Windows 桌面编译 (Visual Studio 2022)，Qt 6.6.3 固定路径",
+      "binaryDir": "${sourceDir}/build_win_msvc",
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.6.3/msvc2019_64"
+      }
+    },
+    {
+      "name": "macos-native",
+      "inherits": "desktop-base",
+      "displayName": "macOS x86_64",
+      "description": "macOS 桌面编译 (Clang + Ninja)，Qt 6.6.3 固定路径",
+      "binaryDir": "${sourceDir}/build_macos",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "/Users/misaki/Qt/6.6.3/macos"
+      }
+    },
+    {
+      "name": "rk3566-cross",
+      "inherits": "embedded-base",
+      "displayName": "RK3566 Cross Compile",
+      "description": "RK3566 嵌入式交叉编译 (ARM64 + Qt6.6.3 EGLFS)",
+      "binaryDir": "${sourceDir}/build_rk3566",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "/home/misaki/MisakiCodes/rk3566-sdk/toolchain/qt_toolchain.cmake",
+        "CMAKE_PREFIX_PATH": "/home/misaki/MisakiCodes/rk3566-sdk/3rd/Qt6.6.3",
+        "GLESv2_INCLUDE_DIR": "/home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/include",
+        "GLESv2_LIBRARY": "/home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/lib/libGLESv2.so",
+        "EGL_INCLUDE_DIR": "/home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/include",
+        "EGL_LIBRARY": "/home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/lib/libEGL.so"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "linux-debug", "configurePreset": "linux-native", "configuration": "Debug" },
+    { "name": "linux-release", "configurePreset": "linux-native", "configuration": "Release" },
+    { "name": "win-mingw-debug", "configurePreset": "windows-mingw", "configuration": "Debug" },
+    { "name": "win-mingw-release", "configurePreset": "windows-mingw", "configuration": "Release" },
+    { "name": "win-msvc-debug", "configurePreset": "windows-msvc", "configuration": "Debug" },
+    { "name": "win-msvc-release", "configurePreset": "windows-msvc", "configuration": "Release" },
+    { "name": "macos-debug", "configurePreset": "macos-native", "configuration": "Debug" },
+    { "name": "macos-release", "configurePreset": "macos-native", "configuration": "Release" },
+    { "name": "rk3566-debug", "configurePreset": "rk3566-cross", "configuration": "Debug" },
+    { "name": "rk3566-release", "configurePreset": "rk3566-cross", "configuration": "Release" }
+  ]
+}

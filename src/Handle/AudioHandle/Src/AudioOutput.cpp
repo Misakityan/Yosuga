@@ -29,27 +29,24 @@ void StreamAudioWorker::start(int sampleRate, int channelCount, int bitDepth) {
 
     m_firstChunk = true;
 
-    // 配置音频格式
     QAudioFormat format;
     format.setSampleRate(sampleRate);
     format.setChannelCount(channelCount);
 
     if (bitDepth == 8) format.setSampleFormat(QAudioFormat::UInt8);
     else if (bitDepth == 16) format.setSampleFormat(QAudioFormat::Int16);
-    else if (bitDepth == 32) format.setSampleFormat(QAudioFormat::Float); // 32位通常为Float
-    else format.setSampleFormat(QAudioFormat::Int16); // 默认回退
+    else if (bitDepth == 32) format.setSampleFormat(QAudioFormat::Float);
+    else format.setSampleFormat(QAudioFormat::Int16);
 
-    // 检查设备是否支持
     auto device = QMediaDevices::defaultAudioOutput();
     if (!device.isFormatSupported(format)) {
         qWarning() << "[Worker] Device does not support format, using preferred format.";
         format = device.preferredFormat();
     }
 
-    // 创建 Sink (必须在 Worker 线程中创建)
     m_sink.reset(new QAudioSink(device, format));
+    m_sink->setBufferSize(sampleRate * channelCount * (bitDepth / 8));
 
-    // 监听状态
     connect(m_sink.data(), &QAudioSink::stateChanged, this, [this](QAudio::State state){
         if (state == QAudio::IdleState) {
             emit playbackFinished();
@@ -61,32 +58,34 @@ void StreamAudioWorker::start(int sampleRate, int channelCount, int bitDepth) {
         }
     });
 
-    // 启动，获取 IO 设备
     m_ioDevice = m_sink->start();
     if (!m_ioDevice) {
         emit errorOccurred("Failed to start audio device");
     } else {
-        qDebug() << "[Worker] Stream started:" << sampleRate << "Hz";
+        qDebug() << "[Worker] Stream started:" << sampleRate << "Hz, buffer:" << m_sink->bufferSize();
     }
 }
 
 void StreamAudioWorker::processChunk(const QByteArray& chunk) {
     if (chunk.isEmpty() || !m_ioDevice || !m_sink) return;
     QByteArray dataToWrite = chunk;
-    // 智能处理 WAV 头
     if (m_firstChunk) {
         if (hasWavHeader(chunk)) {
-            qDebug() << "[Worker] Detected WAV header, stripping 44 bytes.";
             dataToWrite = chunk.mid(44);
         }
         m_firstChunk = false;
     }
 
-    // 写入音频设备 (QAudioSink 内部有缓冲区，这里直接 write 即可)
-    // 如果数据量过大，write 可能会阻塞，但在独立线程中这是可以接受的
-    qint64 written = m_ioDevice->write(dataToWrite);
-    if (written != dataToWrite.size()) {
-        qWarning() << "[Worker] Incomplete write:" << written << "/" << dataToWrite.size();
+    const char *ptr = dataToWrite.constData();
+    qint64 remaining = dataToWrite.size();
+    while (remaining > 0) {
+        qint64 written = m_ioDevice->write(ptr, remaining);
+        if (written > 0) {
+            ptr += written;
+            remaining -= written;
+        } else {
+            QThread::msleep(5);
+        }
     }
 }
 

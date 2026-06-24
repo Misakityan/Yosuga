@@ -284,6 +284,12 @@ void LAppLive2DManager::LoadModelFromPath(const std::string& modelPath, const st
     _models.PushBack(new LAppModel());  // 这样在加载的时候都使用的models[0]这一个位置，自行实现模型选择器要注意注意
     _models[0]->LoadAssets(modelPathStr.GetRawString(), modelJsonName.GetRawString());
 
+    if (_models[0]->GetModel() == nullptr)
+    {
+        LAppPal::PrintLogLn("[APP]Failed to load model: %s / %s", modelPath.c_str(), fileName.c_str());
+        return;
+    }
+
     // 加载完后根据模型大小来重新设置当前窗口大小
     const int width = static_cast<int>(_models[0]->GetModel()->GetCanvasWidthPixel() / 15.0);
     const int height = static_cast<int>(_models[0]->GetModel()->GetCanvasHeightPixel() / 15.0);

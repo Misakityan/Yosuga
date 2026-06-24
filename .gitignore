@@ -1,6 +1,10 @@
 cmake-build-debug
 cmake-build-release
 build
+build_linux
+build_rk3566
 
 # clion
 /.idea
+
+deploy.sh

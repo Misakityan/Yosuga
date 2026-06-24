@@ -8,8 +8,10 @@
 #include <QTimer>
 
 #include "AudioDataHandle.h"
+#if !defined(EMBEDDED_LINUX)
 #include "AutoAgentHandle.h"
 #include "ScreenShotReqDataHandle.h"
+#endif
 #include "DeviceDataHandle.h"
 
 #include "AudioInput.h"
@@ -18,7 +20,7 @@
 #include "DeviceTcpServer.h"
 #include "DeviceWebSocketServer.h"
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(EMBEDDED_LINUX)
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
@@ -88,29 +90,54 @@ AppCore::AppCore(QObject *parent) : QObject(parent)
 
     // 初始化业务解析单例
     AudioDataHandle::getInstance();
+#if !defined(EMBEDDED_LINUX)
     AutoAgentHandle::getInstance();
     ScreenShotReqDataHandle::getInstance();
+#endif
     // 注入发送接口
     NetworkDO::getInstance()->registerSender([](const QString& type, const QJsonObject& data){
         WebSocketClient::getInstance()->sendJson(type, data);
     });
-    // TODO Test
+#ifdef EMBEDDED_LINUX
+    // 嵌入式平台无Settings UI，需手动绑定WebSocket接收链路
+    connect(WebSocketClient::getInstance(), &WebSocketClient::jsonReceived,
+            NetworkDO::getInstance(), &NetworkDO::onDataReceived);
+    // 自动配置并连接服务端（优先读取环境变量 YOSUGA_SERVER_URL）
+    {
+        QString serverUrl = qEnvironmentVariable("YOSUGA_SERVER_URL", "ws://192.168.1.18:8765");
+        auto *client = WebSocketClient::getInstance();
+        client->setConfiguration(QUrl(serverUrl));
+        client->setAutoReconnect(true);
+        client->connectToServer();
+        qDebug() << "[AppCore] Embedded: connecting to server:" << serverUrl;
+    }
+#endif
+#ifdef EMBEDDED_LINUX
+    AudioInput::getInstance()->setAudioSettings(16000, 2);
+#endif
     AudioInput::getInstance()->setAudioPath(QDir::currentPath(), "/temp.wav");
     // 连接必要的信号
     connect(AudioInput::getInstance(), &AudioInput::recordingFinished_Byte,
         this, &AppCore::onRecordingFinished_Byte);
-
+#if !defined(EMBEDDED_LINUX)
     setupGlobalHotkey();
+#endif
+
 }
 
 AppCore::~AppCore()
 {
+#if !defined(EMBEDDED_LINUX)
     cleanupGlobalHotkey();
+#endif
+
     if (m_deviceTcpServer) m_deviceTcpServer->stop();
     if (m_deviceWsServer) m_deviceWsServer->stop();
 
+#if !defined(EMBEDDED_LINUX)
     ScreenShotReqDataHandle::destroy();
     AutoAgentHandle::destroy();
+#endif
     AudioDataHandle::destroy();
     DeviceDataHandle::destroy();
 
@@ -198,7 +225,7 @@ LRESULT CALLBACK AppCore::lowLevelKeyboardHook(int nCode, WPARAM wParam, LPARAM 
 }
 
 // ===================== Linux (X11) =====================
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_LINUX) && !defined(EMBEDDED_LINUX)
 void AppCore::setupGlobalHotkey() {
     Display *display = XOpenDisplay(nullptr);
     if (!display) {

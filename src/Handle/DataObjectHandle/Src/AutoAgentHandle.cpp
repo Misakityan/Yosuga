@@ -4,7 +4,10 @@
 
 #include "AutoAgentHandle.h"
 #include "NetWorkDO.h"
+#if defined(Q_OS_LINUX) && !defined(EMBEDDED_LINUX)
 #include <SimpleAutoGUI.h>          // 引入 AutoGUI 头文件
+#endif
+
 // 初始化静态成员
 QScopedPointer<AutoAgentHandle> AutoAgentHandle::m_instance;
 QMutex AutoAgentHandle::m_mutex;
@@ -43,6 +46,7 @@ AutoAgentHandle::~AutoAgentHandle()
 
 void AutoAgentHandle::onAutoAgentPacketReceived(const AutoAgentDataObject &packet) {
     qDebug() << "Received AutoAgent packet: " << packet.getAction();
+#if defined(Q_OS_LINUX) && !defined(EMBEDDED_LINUX)
     if (packet.getAction() == "click") {    // 单击
         qDebug() << "Click: " << packet.getX1() << ", " << packet.getY1();
         AutoGUI::moveToOnCurrentScreen(packet.getX1(), packet.getY1(), 0.6);
@@ -78,4 +82,6 @@ void AutoAgentHandle::onAutoAgentPacketReceived(const AutoAgentDataObject &packe
             AutoGUI::scroll(40, -1);
         }
     }
+#endif
+
 }
