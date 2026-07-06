@@ -1,31 +1,31 @@
 #pragma once
-
 #ifdef YOSUGA_DEBUG
 
-#include <QElapsedTimer>
-#include <QString>
+#include <QLabel>
 
 class QTimer;
+class QElapsedTimer;
 
-class FpsOverlay
+class FpsOverlay : public QLabel
 {
+    Q_OBJECT
 public:
-    FpsOverlay();
+    explicit FpsOverlay(QWidget* parent = nullptr);
     ~FpsOverlay();
 
     void tick();
-    void draw(int parentWidth, int parentHeight);
+    void renderToPixmap();  // 离线渲染文字到 pixmap
+
 
     float rightMargin = 0.03f;
     float topMargin   = 0.03f;
-    int   fontSize    = 20;
+    int   fontSize    = 18;
 
 private:
-    QElapsedTimer _elapsed;
     QTimer* _timer = nullptr;
+    QElapsedTimer* _elapsed = nullptr;
     int _frameCount   = 0;
     int _displayedFps = 0;
-    QString _text = "FPS: --";
 
     void recalcFps();
 };

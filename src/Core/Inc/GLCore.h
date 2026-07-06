@@ -95,7 +95,7 @@ private:
     PttButton *pttButton;           /// 嵌入式平台PTT按钮
 #endif
 #ifdef YOSUGA_DEBUG
-    FpsOverlay fpsOverlay;          /// 调试用FPS显示
+    FpsOverlay *fpsOverlay = nullptr;          /// 调试用FPS显示
 #endif
 
     bool isLeftPressed;             /// 鼠标左键是否按下

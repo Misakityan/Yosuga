@@ -87,6 +87,10 @@ GLCore::GLCore(const int width, const int height, QWidget *parent)
     // 启用鼠标跟踪，不启用的话鼠标按下才会回调mouseMoveEvent函数
     this->setMouseTracking(true);
 
+#ifdef YOSUGA_DEBUG
+    fpsOverlay = new FpsOverlay(this);
+#endif
+
     // 连接一些必要的信号与槽
 #ifndef EMBEDDED_LINUX      // 如果不是嵌入式Linux系统(注意如果你的嵌入式Linux平台启用了桌面系统，那么可能需要去掉这个条件宏)
     connect(contextMenu, &Menu::closeMainWindow, this, &GLCore::closeGL);   // 关闭窗口信号
@@ -330,7 +334,7 @@ void GLCore::initializeGL()
     }
 
     #ifndef EMBEDDED_LINUX
-    // 初始化GLEW 必须在任何Live2D渲染操作之前调用
+    // 由于加入了对嵌入式平台的支持，因此桌面平台需要手动初始化GLEW 必须在任何Live2D渲染操作之前调用
     // Live2D预编译的libFramework.a使用GLEW函数指针（如glGenFramebuffers等），
     // 未调用glewInit()会导致空指针解引用SIGSEGV
     glewExperimental = GL_TRUE;
@@ -356,8 +360,7 @@ void GLCore::paintGL()
     TextRenderer::getInstance()->update();
     TextRenderer::getInstance()->render();
 #ifdef YOSUGA_DEBUG
-    fpsOverlay.tick();
-    fpsOverlay.draw(width(), height());
+    fpsOverlay->tick();
 #endif
 }
 
@@ -370,6 +373,9 @@ void GLCore::resizeGL(const int w, const int h)
 
 #ifdef EMBEDDED_LINUX
     pttButton->updateLayout(w, h);
+#endif
+#ifdef YOSUGA_DEBUG
+    if (fpsOverlay) fpsOverlay->renderToPixmap();  // 窗口大小变化时重算位置
 #endif
 }
 
