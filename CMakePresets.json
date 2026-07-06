@@ -95,6 +95,23 @@
         "EGL_INCLUDE_DIR": "/home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/include",
         "EGL_LIBRARY": "/home/misaki/MisakiCodes/rk3566-sdk/host/aarch64-buildroot-linux-gnu/sysroot/usr/lib/libEGL.so"
       }
+    },
+    {
+      "name": "vince-cross",
+      "inherits": "embedded-base",
+      "displayName": "Redmi 5 Plus (vince) Cross Compile",
+      "description": "红米5 Plus 嵌入式交叉编译 (ARM64 + Qt6.6.3 EGLFS/DRM)",
+      "binaryDir": "${sourceDir}/build_vince",
+      "generator": "Unix Makefiles",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "/home/misaki/MisakiCodes/Redmi5Plus-SDK/vince_toolchain.cmake",
+        "CMAKE_PREFIX_PATH": "/home/misaki/MisakiCodes/Redmi5Plus-SDK/qt6.6.3-vince",
+        "GLESv2_INCLUDE_DIR": "/home/misaki/MisakiCodes/Redmi5Plus-SDK/vince-rootfs/usr/include",
+        "GLESv2_LIBRARY": "/home/misaki/MisakiCodes/Redmi5Plus-SDK/vince-rootfs/usr/lib/libGLESv2.so",
+        "EGL_INCLUDE_DIR": "/home/misaki/MisakiCodes/Redmi5Plus-SDK/vince-rootfs/usr/include",
+        "EGL_LIBRARY": "/home/misaki/MisakiCodes/Redmi5Plus-SDK/vince-rootfs/usr/lib/libEGL.so"
+      }
     }
   ],
   "buildPresets": [
@@ -107,6 +124,8 @@
     { "name": "macos-debug", "configurePreset": "macos-native", "configuration": "Debug" },
     { "name": "macos-release", "configurePreset": "macos-native", "configuration": "Release" },
     { "name": "rk3566-debug", "configurePreset": "rk3566-cross", "configuration": "Debug" },
-    { "name": "rk3566-release", "configurePreset": "rk3566-cross", "configuration": "Release" }
+    { "name": "rk3566-release", "configurePreset": "rk3566-cross", "configuration": "Release" },
+    { "name": "vince-debug", "configurePreset": "vince-cross", "configuration": "Debug" },
+    { "name": "vince-release", "configurePreset": "vince-cross", "configuration": "Release" }
   ]
 }

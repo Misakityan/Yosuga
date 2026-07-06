@@ -52,8 +52,9 @@ cmake ..
 make
 ```
 
-注意：本项目只是Yosuga的客户端部分，完整的还包括服务端
+注意：本项目只是Yosuga的客户端部分，完整的还包括服务端和嵌入式端
 - 服务端项目地址见：https://github.com/Misakityan/Yosuga_server
+- 嵌入式项目地址见：https://github.com/Misakityan/Yosuga_embedded
 
 当前支持平台(已测试过的)：
 -    Windows:    Windows 10

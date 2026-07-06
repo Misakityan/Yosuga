@@ -6,7 +6,10 @@
 #include "menu.h"
 #endif
 #ifdef EMBEDDED_LINUX
-#include <QPushButton>
+#include "PttButton.hpp"
+#endif
+#ifdef YOSUGA_DEBUG
+#include "FpsOverlay.hpp"
 #endif
 
 #ifdef Q_OS_WIN
@@ -89,7 +92,10 @@ private:
     Menu *contextMenu;              /// 使用 Menu 类
 #endif
 #ifdef EMBEDDED_LINUX
-    QPushButton *pttButton;         /// 嵌入式平台PTT按钮
+    PttButton *pttButton;           /// 嵌入式平台PTT按钮
+#endif
+#ifdef YOSUGA_DEBUG
+    FpsOverlay fpsOverlay;          /// 调试用FPS显示
 #endif
 
     bool isLeftPressed;             /// 鼠标左键是否按下

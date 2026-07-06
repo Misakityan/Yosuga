@@ -10,13 +10,17 @@ set(CMAKE_AUTOUIC ON)
 if(DEFINED TARGET_ARCH AND TARGET_ARCH STREQUAL "arm64")
     set(PLAT "linux_arm")
     set(ARCH "arm64")
-    set(CMAKE_PREFIX_PATH "/home/misaki/MisakiCodes/rk3566-sdk/3rd/Qt6.6.3")
+    if(NOT DEFINED CMAKE_PREFIX_PATH)   # 优先使用外部传入的变量值
+        set(CMAKE_PREFIX_PATH "/home/misaki/MisakiCodes/rk3566-sdk/3rd/Qt6.6.3")
+    endif()
     add_definitions(-DCSM_TARGET_HARMONYOS_ES3)   # OpenGL ES 3.0 渲染宏
     add_definitions(-DEMBEDDED_LINUX)               # 嵌入式Linux专用宏
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64|ARM64")
     set(PLAT "linux_arm")
     set(ARCH "arm64")
-    set(CMAKE_PREFIX_PATH "/home/misaki/MisakiCodes/rk3566-sdk/3rd/Qt6.6.3")
+    if(NOT DEFINED CMAKE_PREFIX_PATH)
+        set(CMAKE_PREFIX_PATH "/home/misaki/MisakiCodes/rk3566-sdk/3rd/Qt6.6.3")
+    endif()
     add_definitions(-DCSM_TARGET_HARMONYOS_ES3)
     add_definitions(-DEMBEDDED_LINUX)
 elseif(WIN32)
@@ -73,6 +77,8 @@ file(GLOB_RECURSE YosugaSrc
         "src/DAO/Src/*.cpp"
         "src/UI/Render/TextRender/Src/*.cpp"
         "src/UI/Render/TextRender/Inc/*.h"
+        "src/UI/Widgets/Src/*.cpp"
+        "src/UI/Widgets/Inc/*.hpp"
         "src/Core/Src/*.cpp"
         "src/Core/Inc/*.h"
         "src/Utils/Inc/*.hpp"
@@ -91,6 +97,10 @@ if(NOT PLAT STREQUAL "linux_arm")
     message(STATUS " 被主机平台额外包含的库： ${YosugaSrc}")
     list(APPEND YosugaSrc ${DesktopUI_Src})
 endif()
+
+message(STATUS ">>> CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
+message(STATUS ">>> CMAKE_FIND_ROOT_PATH = ${CMAKE_FIND_ROOT_PATH}")
+message(STATUS ">>> Qt6_DIR = ${Qt6_DIR}")
 
 # 查找Qt6模块以及其他必须模块
 find_package(Qt6 COMPONENTS
@@ -111,7 +121,8 @@ if(NOT PLAT STREQUAL "linux_arm")
     find_package(OpenGL REQUIRED)
 else ()
     # 若为arm平台，对于C++采用静态链接标准库，避免环境复杂出现问题
-    set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc")
+    # --allow-shlib-undefined: 允许共享库存在未定义符号，运行时由目标设备的 glibc 解析(这是为了放置你使用的交叉编译工具链对glibc版本要求严格)
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc -Wl,--allow-shlib-undefined")
 endif ()
 
 # 添加第三方子项目
@@ -222,9 +233,9 @@ if(PLAT STREQUAL "linux_arm")       ## 针对嵌入式Linux的配置，部分条
             Framework
             Live2DCubismCore
             # Mali GPU 驱动完整链接（EGLFS 必需）
-            -lmali-hook     # 注意此处，你的soc不一定是该GPU，可能需要修改
-            -Wl,--whole-archive -lmali-hook-injector -Wl,--no-whole-archive
-            -lmali
+#            -lmali-hook     # 注意此处，你的soc不一定是该GPU，可能需要修改
+#            -Wl,--whole-archive -lmali-hook-injector -Wl,--no-whole-archive
+#            -lmali
             -ldrm
             -lEGL
             -lGLESv2
@@ -268,16 +279,34 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         src/UI/Menu/Inc
         src/UI/Setting/Inc
         src/UI/Render/TextRender/Inc
+        src/UI/Widgets/Inc
         src/Core/Inc
         src/DAO/Inc
         src/Utils/Inc
 )
 
+# Debug 编译时启用 FPS 显示等调试功能
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DYOSUGA_DEBUG)
+endif()
+
 # 资源复制（所有平台）
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/other/Resources"
         DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/other/FrameworkShaders"
-        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+# 根据平台选择不同的 Shader 目录，但目标目录名统一为 FrameworkShaders
+if(PLAT STREQUAL "linux_arm")
+    # 先清理旧的
+    file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/FrameworkShaders")
+    # 复制到构建目录 会生成 FrameworkShadersES
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/other/FrameworkShadersES"
+            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+    # 重命名为 FrameworkShaders，最终路径 build/FrameworkShaders/
+    file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/FrameworkShadersES"
+            "${CMAKE_CURRENT_BINARY_DIR}/FrameworkShaders")
+else()
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/other/FrameworkShaders"
+            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
 
 # Windows 特有的 DLL 复制
 if(PLAT STREQUAL "windows")

@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QMouseEvent>
 #include <QDebug>
+#include <QPainter>
 
 #include <QFont>
 #include <QApplication>
@@ -94,28 +95,13 @@ GLCore::GLCore(const int width, const int height, QWidget *parent)
 #ifdef EMBEDDED_LINUX
     AppCore::getInstance();
 
-    pttButton = new QPushButton(this);
-    pttButton->setFixedSize(64, 64);
-    pttButton->move(width - 80, height - 80);
-    pttButton->setIcon(QIcon("Resources/Pic/Others/voice.png"));
-    pttButton->setIconSize(QSize(56, 56));
-    pttButton->setStyleSheet(
-        "QPushButton {"
-        "  background-color: rgba(255, 255, 255, 60);"
-        "  border-radius: 32px;"
-        "  border: none;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: rgba(250, 80, 80, 150);"
-        "}"
-    );
-    pttButton->raise();
-    pttButton->show();
+    pttButton = new PttButton(this);
+    pttButton->updateLayout(width, height);
 
-    connect(pttButton, &QPushButton::pressed, this, []() {
+    connect(pttButton, &PttButton::pressedForPtt, this, []() {
         AppCore::getInstance()->startPttRecording();
     });
-    connect(pttButton, &QPushButton::released, this, []() {
+    connect(pttButton, &PttButton::releasedForPtt, this, []() {
         AppCore::getInstance()->stopPttRecording();
     });
 #endif
@@ -342,6 +328,8 @@ void GLCore::initializeGL()
     if (!LAppDelegate::GetInstance()->GetRenderContext()) {
         LAppDelegate::GetInstance()->SetRenderContext(new GLRenderContext());
     }
+
+    #ifndef EMBEDDED_LINUX
     // 初始化GLEW 必须在任何Live2D渲染操作之前调用
     // Live2D预编译的libFramework.a使用GLEW函数指针（如glGenFramebuffers等），
     // 未调用glewInit()会导致空指针解引用SIGSEGV
@@ -350,6 +338,7 @@ void GLCore::initializeGL()
         qFatal("Failed to initialize GLEW");
         return;
     }
+    #endif
 
     // 注册窗口大小变更回调 模型加载后通过此回调通知GLCore调整窗口
     LAppDelegate::GetInstance()->SetWindowResizeCallback([this](int w, int h) {
@@ -361,10 +350,15 @@ void GLCore::initializeGL()
 
 void GLCore::paintGL()
 {
-    LAppDelegate::GetInstance()->update();      // Live2D画面渲染
+    // Live2D Model画面渲染
+    LAppDelegate::GetInstance()->update();
     // 渲染文本
     TextRenderer::getInstance()->update();
     TextRenderer::getInstance()->render();
+#ifdef YOSUGA_DEBUG
+    fpsOverlay.tick();
+    fpsOverlay.draw(width(), height());
+#endif
 }
 
 void GLCore::resizeGL(const int w, const int h)
@@ -373,6 +367,10 @@ void GLCore::resizeGL(const int w, const int h)
     TextRenderer::getInstance()->setWindowSize(w, h);
 
     LAppDelegate::GetInstance()->resize(w, h);
+
+#ifdef EMBEDDED_LINUX
+    pttButton->updateLayout(w, h);
+#endif
 }
 
 // 设置窗口大小，并触发 resizeGL 事件
