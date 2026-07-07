@@ -34,7 +34,7 @@
       "binaryDir": "${sourceDir}/build_linux",
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_PREFIX_PATH": "/home/misaki/Qt6.3/6.6.3/gcc_64"
       }
     },
@@ -113,19 +113,5 @@
         "EGL_LIBRARY": "/home/misaki/MisakiCodes/Redmi5Plus-SDK/vince-rootfs/usr/lib/libEGL.so"
       }
     }
-  ],
-  "buildPresets": [
-    { "name": "linux-debug", "configurePreset": "linux-native", "configuration": "Debug" },
-    { "name": "linux-release", "configurePreset": "linux-native", "configuration": "Release" },
-    { "name": "win-mingw-debug", "configurePreset": "windows-mingw", "configuration": "Debug" },
-    { "name": "win-mingw-release", "configurePreset": "windows-mingw", "configuration": "Release" },
-    { "name": "win-msvc-debug", "configurePreset": "windows-msvc", "configuration": "Debug" },
-    { "name": "win-msvc-release", "configurePreset": "windows-msvc", "configuration": "Release" },
-    { "name": "macos-debug", "configurePreset": "macos-native", "configuration": "Debug" },
-    { "name": "macos-release", "configurePreset": "macos-native", "configuration": "Release" },
-    { "name": "rk3566-debug", "configurePreset": "rk3566-cross", "configuration": "Debug" },
-    { "name": "rk3566-release", "configurePreset": "rk3566-cross", "configuration": "Release" },
-    { "name": "vince-debug", "configurePreset": "vince-cross", "configuration": "Debug" },
-    { "name": "vince-release", "configurePreset": "vince-cross", "configuration": "Release" }
   ]
 }

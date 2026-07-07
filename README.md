@@ -22,7 +22,7 @@ _**本项目为Yosuga.**_
 本项目使用CMake构建，基于C++Qt6.6.3以及Live2D官方SDK(CubismSdkForNative-5-r.4.1)实现Live2D桌面助手
 (本项目由[Yosuga-qt5](https://github.com/Misakityan/Yosuga-qt5) 发展更新而来，项目架构与代码都有所不同，最显著的特点是本项目支持多平台)
 
-环境为:
+本项目开发环境为:
 
 - cmake version 3.5
 
@@ -59,11 +59,24 @@ make
 当前支持平台(已测试过的)：
 -    Windows:    Windows 10
 -    Linux:      kUbuntu 24.04
+-    Linux ARM:  RK3566, Xiaomi Redmi 5 Plus
 
 相关教程见BiliBili：https://www.bilibili.com/video/BV1TtkHYpEDA/?spm_id_from=333.1387.homepage.video_card.click&vd_source=d66e155c7b27c10078bc67965ea1989e
 
 实现效果：
 
+- 主机平台：
+<div align="center">
+    <img src="./doc/img/Yosuga for Desktop1.png" width="25%" />
+</div>
+<div align="center">
+    <img src="./doc/img/Yosuga for Desktop2.png" width="80%" />
+</div>
+
+- 嵌入式Linux平台：
+<div align="center">
+    <img src="./doc/img/YosugaforArmLinux.jpg" width="40%" />
+</div>
 
 关于授权 <br>
 本项目采用多重授权结构：
